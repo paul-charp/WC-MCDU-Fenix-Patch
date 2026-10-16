@@ -275,8 +275,9 @@ def wait_for_mcdu(ui):
 
 
 # ------------------------------------------------------------------ SimAppPro2
-def app_pids():
-    """Process ids of the running SimAppPro2.exe processes."""
+def app_pids(exe_name=None):
+    """Process ids of the running processes named exe_name (default SimAppPro2.exe)."""
+    exe_name = (exe_name or os.path.basename(EXE)).lower()
     import ctypes
     from ctypes import wintypes
 
@@ -295,7 +296,7 @@ def app_pids():
     try:
         ok = k32.Process32FirstW(wintypes.HANDLE(snap), ctypes.byref(e))
         while ok:
-            if e.szExeFile.lower() == os.path.basename(EXE).lower():
+            if e.szExeFile.lower() == exe_name:
                 pids.add(e.th32ProcessID)
             ok = k32.Process32NextW(wintypes.HANDLE(snap), ctypes.byref(e))
     finally:
@@ -671,7 +672,11 @@ def main():
     ui = UI()
     try:
         if not os.path.exists(EXE):
-            raise SetupError(f"SimAppPro2 not found ({EXE}).")
+            v1 = (" The original SimAppPro (version 1) is running: it is not supported."
+                  if app_pids("SimAppPro.exe") else "")
+            raise SetupError(f"SimAppPro2 not found ({EXE}).{v1}\n"
+                             "This setup needs SimAppPro2, not the original SimAppPro: install SimAppPro2 "
+                             "from WinWing's website, open it once with the MCDU plugged in, then run this again.")
         gx = gamedisplay_dir()
         if a.check:
             return 0 if cmd_check(ui, gx, a.y) else 1

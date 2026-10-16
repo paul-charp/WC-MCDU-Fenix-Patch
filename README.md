@@ -10,6 +10,11 @@ stock SimAppPro2 install into a screen that looks like the Fenix MCDU:
 
 **[⬇ Download the latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest)** · **[Install instructions](#install)**
 
+> [!IMPORTANT]
+> **This needs SimAppPro2**, WinWing's newer app. It does **not** work with the original
+> **SimAppPro** (version 1), which most MCDU owners still have: install SimAppPro2 first and run
+> the MCDU with it. This patch only configures SimAppPro2.
+
 > **About the fonts.** `FMGC Pixel31m` is not the Fenix font: it was rebuilt pixel by pixel on
 > the MCDU's 23 × 31 grid to match the look of the Fenix FMGC font (FlightBus, Jesper
 > Giørtz-Behrens). It contains none of the original font files or outlines.
@@ -38,7 +43,9 @@ You need:
 
 - Windows, with MSFS and the Fenix A320
 - the WinWing MCDU, plugged in by USB
-- SimAppPro2 installed and opened at least once with the MCDU plugged in
+- **SimAppPro2, not the original SimAppPro (version 1)**: installed, and opened at least once with
+  the MCDU plugged in. SimAppPro2 installs to `%LOCALAPPDATA%\SimAppPro2`. If you only have
+  SimAppPro, install SimAppPro2 from WinWing's website first.
 
 Nothing else: no Python or other software to install.
 
@@ -161,6 +168,7 @@ magenta `#FF63FF`, red `#FF0000`, yellow `#FFFF00`.
 |---|---|
 | *Windows protected your PC* | The program is not code-signed: click **More info**, then **Run anyway**. |
 | The antivirus blocks or removes the `.exe` | A false positive that hits many Python-built programs. Allow it in the antivirus, or [run from the source](#run-from-the-source-instead). |
+| `SimAppPro2 not found` | Only the original SimAppPro (version 1) is installed, or nothing is. Install **SimAppPro2** from WinWing's website, open it once with the MCDU plugged in, then run again. |
 | `Connect the MCDU` / `No WinWing MCDU found on USB` | Plug the MCDU in (any USB port). The setup continues by itself once Windows sees it. |
 | `SimAppPro2 MCDU profile not found` | Start SimAppPro2 once with the MCDU plugged in, then run again. |
 | `SimAppPro2 did not create its MCDU settings` | Open the MCDU screen settings page once in SimAppPro2, close it, run again. |
