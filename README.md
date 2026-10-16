@@ -8,6 +8,8 @@ stock SimAppPro2 install into a screen that looks like the Fenix MCDU:
 - the Fenix colours,
 - the Fenix pages moved up so each data line sits on its line-select key.
 
+**[⬇ Download the latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest)** · **[Install instructions](#install)**
+
 > **About the fonts.** `FMGC Pixel31m` is not the Fenix font: it was rebuilt pixel by pixel on
 > the MCDU's 23 × 31 grid to match the look of the Fenix FMGC font (FlightBus, Jesper
 > Giørtz-Behrens). It contains none of the original font files or outlines.
@@ -28,40 +30,36 @@ Glyph sheet (each square is one MCDU pixel):
 
 ![Glyph sheet, before and after](docs/glyphs.png)
 
-## What it changes
-
-| Item | Stock SimAppPro2 | This patch |
-|---|---|---|
-| Font | WinWing `WWT_MCDU` | `FMGC-Pixel31m-Large` / `-Small`: pixel font custom-made for the WinCtrl MCDU to match the Fenix font at the pixel level, scale 1.0, no shift |
-| Cell size | 23 × 29 | 23 × 31 |
-| Editor grid | X 16, Y 17, preview yBase 20 | X 16, Y 20, preview yBase 0 (the editor's test grid matches what the sim shows) |
-| Fenix page position | X 52, Y 37 (hard-coded in the SimLogic Fenix scripts) | X 52, Y 20 |
-| Colours | SimAppPro2 defaults | Fenix web MCDU colours (written explicitly so a changed palette is put back) |
-
-Fenix web MCDU colours: amber `#FFA500`, white `#FFFFFF`, cyan `#00FFFF`, green `#00FF3D`,
-magenta `#FF63FF`, red `#FF0000`, yellow `#FFFF00`.
-
-## Requirements
-
-- Windows, MSFS with the Fenix A320, WinWing MCDU
-- SimAppPro2 installed and started at least once with the MCDU plugged in
-- The MCDU plugged in while the setup runs (it waits up to 3 minutes for it if not)
-- Nothing else for the `.exe`. To run the script instead: Python 3 on `PATH`; its first run
-  installs the Python packages `rich` and `websocket-client` (`pip install --user`).
-
 ## Install
 
-Download `WC-MCDU-Fenix-Patch-<version>.zip` from the repository's **Releases** page (or build
-it, see below), unzip it anywhere and double-click **`WC-MCDU-Fenix-Patch.exe`** in the unzipped
-folder; keep its `_internal` folder next to it. It takes under a minute, closes SimAppPro2 while
-it works, and waits for Enter before closing its window. Backups go to a `backups\` folder next
-to the `.exe`.
+**[⬇ Download the latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest)**
 
-The `.exe` is not signed: the first time, Windows SmartScreen may show "Windows protected your PC".
-Click **More info → Run anyway**.
+You need:
 
-Without the `.exe`: double-click **`installer.bat`**, or run `python setup_mcdu.py`. Both take the
-same arguments as the `.exe`.
+- Windows, with MSFS and the Fenix A320
+- the WinWing MCDU, plugged in by USB
+- SimAppPro2 installed and opened at least once with the MCDU plugged in
+
+Nothing else: no Python or other software to install.
+
+1. **Download** `WC-MCDU-Fenix-Patch-<version>.zip` from the
+   [latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest), under *Assets*.
+2. **Unzip it**: right-click the zip, **Extract All…**, then **Extract**. Put the folder anywhere,
+   for example in `Documents`. Keep the `_internal` folder next to `WC-MCDU-Fenix-Patch.exe`: the
+   program needs it.
+3. **Plug in the MCDU** if it isn't already. SimAppPro2 and the sim can stay open: the setup closes
+   and reopens SimAppPro2 by itself.
+4. **Double-click `WC-MCDU-Fenix-Patch.exe`** in the unzipped folder.
+   - First time only, if Windows shows *"Windows protected your PC"*: click **More info**, then
+     **Run anyway**. (The program is not code-signed.)
+5. **Wait about a minute** while the progress bar runs. Leave SimAppPro2 alone: it closes and
+   reopens on its own.
+6. When the window shows **Done: everything is in place.**, press **Enter** to close it. The MCDU
+   now shows the new font, colours and layout.
+
+If a line shows ✘, or the setup stops with a message, see [Troubleshooting](#troubleshooting).
+
+A successful run looks like this:
 
 ```
 ╭─ WinWing MCDU · Fenix A320 · setup ─────────────────────────╮
@@ -72,12 +70,12 @@ same arguments as the `.exe`.
 │  SimAppPro2  will be closed and restarted (under a minute)  │
 ╰─────────────────────────────────────────────────────────────╯
 
-  ✔ Close SimAppPro2               closed  6s
-  ✔ Back up current settings       backups\20261015-215323
+  ✔ Close SimAppPro2               closed  5s
+  ✔ Back up current settings       backups\20261017-013516
   ✔ Install fonts                  FMGC-Pixel31m-Large / FMGC-Pixel31m-Small
   ✔ Fenix page position            Y 20 in 26 scripts
   ✔ Grid and colours               X 16  Y 20  23x31, Fenix colours
-  ✔ Send fonts to the MCDU         font set WWT_MCDU  21s
+  ✔ Send fonts to the MCDU         font set WWT_MCDU  24s
   ✔ Restart SimAppPro2             running normally  5s
 
 Check
@@ -93,7 +91,43 @@ Check
 ╰─────────────────────────────────╯
 ```
 
-The steps:
+### After a SimAppPro2 update
+
+**Run `WC-MCDU-Fenix-Patch.exe` again** (step 4). SimAppPro2 updates replace its Fenix scripts, which
+puts the Fenix pages back at their old position (Y 37); the fonts and colours stay.
+
+### Updating to a new version of this patch
+
+Download the [latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest), unzip it (you can delete the old folder) and run the new
+`WC-MCDU-Fenix-Patch.exe`.
+
+### Undo
+
+Every run first saves the current settings in a `backups\<date-time>\` folder next to the `.exe`.
+To put one back, see `--restore` in [Options](#options).
+
+### Options
+
+To pass options, open a command prompt in the unzipped folder: click the folder's address bar,
+type `cmd` and press Enter. Then type one of:
+
+```
+WC-MCDU-Fenix-Patch.exe                                  install / re-apply everything
+WC-MCDU-Fenix-Patch.exe --check                          check without changing anything (✘ = needs fixing)
+WC-MCDU-Fenix-Patch.exe --y 18                           install with another vertical position
+WC-MCDU-Fenix-Patch.exe --restore backups\20261017-013516   put a backup back, then press Apply
+                                                         on the MCDU font page in SimAppPro2
+```
+
+When using `--y`, pass the same value to `--check`.
+
+### Run from the source instead
+
+With Python 3 on `PATH`, clone the repository and double-click **`installer.bat`**, or run
+`python setup_mcdu.py` with the same options. The first run installs the Python packages `rich`
+and `websocket-client` (`pip install --user`).
+
+### What the setup does
 
 0. Check that a WinWing MCDU is on USB (vendor `4098`, Captain / First Officer / Observer ids);
    if not, ask to plug it in and start as soon as it is detected.
@@ -108,37 +142,34 @@ The steps:
 
 If anything fails, SimAppPro2 is still restarted normally and the previous files stay in `backups\`.
 
-## Commands
+## What it changes
 
-Same arguments for `WC-MCDU-Fenix-Patch.exe`, `installer.bat` and `python setup_mcdu.py`:
+| Item | Stock SimAppPro2 | This patch |
+|---|---|---|
+| Font | WinWing `WWT_MCDU` | `FMGC-Pixel31m-Large` / `-Small`: pixel font custom-made for the WinCtrl MCDU to match the Fenix font at the pixel level, scale 1.0, no shift |
+| Cell size | 23 × 29 | 23 × 31 |
+| Editor grid | X 16, Y 17, preview yBase 20 | X 16, Y 20, preview yBase 0 (the editor's test grid matches what the sim shows) |
+| Fenix page position | X 52, Y 37 (hard-coded in the SimLogic Fenix scripts) | X 52, Y 20 |
+| Colours | SimAppPro2 defaults | Fenix web MCDU colours (written explicitly so a changed palette is put back) |
 
-```
-python setup_mcdu.py                                  install / re-apply everything
-python setup_mcdu.py --check                          check without changing anything (✘ = needs fixing)
-python setup_mcdu.py --y 18                           install with another vertical position
-python setup_mcdu.py --restore backups\20261015-215323   put a backup back (then press Apply)
-```
-
-When using `--y`, pass the same value to `--check`.
-
-## After a SimAppPro2 update
-
-**Run the `.exe` (or `installer.bat`) again.** Updates replace the SimLogic scripts, so the
-Fenix pages go back to Y 37. `WC-MCDU-Fenix-Patch.exe --check` shows whether it is needed.
+Fenix web MCDU colours: amber `#FFA500`, white `#FFFFFF`, cyan `#00FFFF`, green `#00FF3D`,
+magenta `#FF63FF`, red `#FF0000`, yellow `#FFFF00`.
 
 ## Troubleshooting
 
 | Message | Fix |
 |---|---|
+| *Windows protected your PC* | The program is not code-signed: click **More info**, then **Run anyway**. |
+| The antivirus blocks or removes the `.exe` | A false positive that hits many Python-built programs. Allow it in the antivirus, or [run from the source](#run-from-the-source-instead). |
 | `Connect the MCDU` / `No WinWing MCDU found on USB` | Plug the MCDU in (any USB port). The setup continues by itself once Windows sees it. |
 | `SimAppPro2 MCDU profile not found` | Start SimAppPro2 once with the MCDU plugged in, then run again. |
 | `SimAppPro2 did not create its MCDU settings` | Open the MCDU screen settings page once in SimAppPro2, close it, run again. |
 | `SimAppPro2 does not list FMGC-Pixel31m-…` | SimAppPro2 reads its font list at startup: restart it, run again. |
 | `Unexpected format in fnx_…` | A SimAppPro2 update changed the scripts; that file was left untouched. The pattern to update is `SIM_POINT` in `setup_mcdu.py`. |
+| `SimAppPro2 is not answering` | Close SimAppPro2, then run again. |
 | `SimAppPro2 did not open its debug port` | Something else is using port 9333, or SimAppPro2 failed to start. Close SimAppPro2 and run again. |
 
-To go back to the state before a run: `python setup_mcdu.py --restore backups\<date-time>`,
-then press **Apply** on the MCDU font page in SimAppPro2.
+To go back to the state before a run, see [Undo](#undo).
 
 ## Why this is needed
 
