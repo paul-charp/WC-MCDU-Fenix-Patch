@@ -1,0 +1,15 @@
+# created by the scripts when they run
+backups/
+backup/
+__pycache__/
+
+# SimAppPro2 logs if it gets started from this folder
+*.log
+crash_log.txt
+Monitor_crash_log.txt
+crashs/
+Monitor_crashes/
+
+# build_exe.py output (attach the .exe to a release instead of committing it)
+build/
+dist/

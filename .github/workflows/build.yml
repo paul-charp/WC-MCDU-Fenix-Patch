@@ -1,0 +1,45 @@
+# Builds the .exe zip on every push to main and pull request (workflow artifact).
+# A pushed tag vX.Y.Z also publishes a GitHub release with the zip; the tag message is the notes:
+#   git tag -a v1.2.0 -m "- what changed"  &&  git push origin v1.2.0
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install build tools
+        run: python -m pip install --disable-pip-version-check pyinstaller rich websocket-client
+
+      - name: Build
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then version="$GITHUB_REF_NAME"; else version="0.0.0"; fi
+          python build_exe.py "$version"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WC-MCDU-Fenix-Patch
+          path: dist/*.zip
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --title "$GITHUB_REF_NAME" --notes-from-tag
