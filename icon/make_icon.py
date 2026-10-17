@@ -2,7 +2,7 @@
 
   python icon/make_icon.py
 
-Large sizes use the real FMGC Pixel31m glyphs; 16-32 px are drawn as coloured text bars so they
+Large sizes use the real FMGC Pixel31n glyphs; 16-32 px are drawn as coloured text bars so they
 stay readable. Also writes icon/preview.png (every size, enlarged).
 """
 import glob
@@ -73,7 +73,7 @@ def body(n, keys=True):
 
 
 def glyphs(n):
-    """128 and 256 px: the real FMGC Pixel31m glyphs (one font pixel per icon pixel at 256)."""
+    """128 and 256 px: the real FMGC Pixel31n glyphs (one font pixel per icon pixel at 256)."""
     text = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
     font = ImageFont.truetype(FONT, CELL_H)             # pixel-exact: renders the drawn pixels
     d = ImageDraw.Draw(text)

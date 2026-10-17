@@ -219,13 +219,13 @@ def main():
     before = ("Before: stock SimAppPro2",
               "WinWing stock font, 23×29 cells, Fenix pages at X 52 Y 37")
     after = ("After: this patch",
-             "FMGC Pixel31m: pixel font custom-made for the WinCtrl MCDU to match the Fenix font at the pixel level; "
+             "FMGC Pixel31n: pixel font custom-made for the WinCtrl MCDU to match the Fenix font at the pixel level; "
              "23×31 cells, Fenix pages at X 52 Y 20")
     for name, page in (("perf-take-off", PERF_TAKE_OFF), ("f-pln", F_PLN)):
         stacked([(*before, in_bezel(draw_screen(page, stock, STOCK_ORIGIN), cal)),
                  (*after, in_bezel(draw_screen(page, patched, PATCHED_ORIGIN), cal))], os.path.join(HERE, f"{name}.png"))
     stacked([("Before", "WinWing stock font: large green, small cyan", draw_glyph_sheet(stock, 6)),
-             ("After", "FMGC Pixel31m, custom-made to match the Fenix font: large green, small cyan", draw_glyph_sheet(patched, 6))],
+             ("After", "FMGC Pixel31n, custom-made to match the Fenix font: large green, small cyan", draw_glyph_sheet(patched, 6))],
             os.path.join(HERE, "glyphs.png"))
 
 

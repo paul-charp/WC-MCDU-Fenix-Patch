@@ -3,7 +3,7 @@
 One-click setup for the **WinCtrl (WinWing) MCDU** with the **Fenix A320** in MSFS. It turns a
 stock SimAppPro2 install into a screen that looks like the Fenix MCDU:
 
-- **FMGC Pixel31m**, a pixel font custom-made for the WinCtrl MCDU to match the Fenix font at
+- **FMGC Pixel31n**, a pixel font custom-made for the WinCtrl MCDU to match the Fenix font at
   the pixel level,
 - the Fenix colours,
 - the Fenix pages moved up so each data line sits on its line-select key.
@@ -15,7 +15,7 @@ stock SimAppPro2 install into a screen that looks like the Fenix MCDU:
 > **SimAppPro** (version 1), which most MCDU owners still have: install SimAppPro2 first and run
 > the MCDU with it. This patch only configures SimAppPro2.
 
-> **About the fonts.** `FMGC Pixel31m` is not the Fenix font: it was rebuilt pixel by pixel on
+> **About the fonts.** `FMGC Pixel31n` is not the Fenix font: it was rebuilt pixel by pixel on
 > the MCDU's 23 × 31 grid to match the look of the Fenix FMGC font (FlightBus, Jesper
 > Giørtz-Behrens). It contains none of the original font files or outlines.
 
@@ -71,7 +71,7 @@ A successful run looks like this:
 ```
 ╭─ WinWing MCDU · Fenix A320 · setup ─────────────────────────╮
 │  MCDU        connected (Captain)                            │
-│  Fonts       FMGC-Pixel31m-Large / FMGC-Pixel31m-Small      │
+│  Fonts       FMGC-Pixel31n-Large / FMGC-Pixel31n-Small      │
 │  Grid        X 16  Y 20  23x31 cells                        │
 │  Colours     Fenix web MCDU                                 │
 │  SimAppPro2  will be closed and restarted (under a minute)  │
@@ -79,14 +79,14 @@ A successful run looks like this:
 
   ✔ Close SimAppPro2               closed  5s
   ✔ Back up current settings       backups\20261017-013516
-  ✔ Install fonts                  FMGC-Pixel31m-Large / FMGC-Pixel31m-Small
+  ✔ Install fonts                  FMGC-Pixel31n-Large / FMGC-Pixel31n-Small
   ✔ Fenix page position            Y 20 in 26 scripts
   ✔ Grid and colours               X 16  Y 20  23x31, Fenix colours
   ✔ Send fonts to the MCDU         font set WWT_MCDU  24s
   ✔ Restart SimAppPro2             running normally  5s
 
 Check
-   ✔  Fonts installed         FMGC-Pixel31m-Large / FMGC-Pixel31m-Small
+   ✔  Fonts installed         FMGC-Pixel31n-Large / FMGC-Pixel31n-Small
    ✔  Fonts selected          set WWT_MCDU, scale 1, no shift
    ✔  Font sent to MCDU       23x31 cells
    ✔  Grid                    X 16  Y 20  23x31  yBase 0
@@ -153,7 +153,7 @@ If anything fails, SimAppPro2 is still restarted normally and the previous files
 
 | Item | Stock SimAppPro2 | This patch |
 |---|---|---|
-| Font | WinWing `WWT_MCDU` | `FMGC-Pixel31m-Large` / `-Small`: pixel font custom-made for the WinCtrl MCDU to match the Fenix font at the pixel level, scale 1.0, no shift |
+| Font | WinWing `WWT_MCDU` | `FMGC-Pixel31n-Large` / `-Small`: pixel font custom-made for the WinCtrl MCDU to match the Fenix font at the pixel level, scale 1.0, no shift |
 | Cell size | 23 × 29 | 23 × 31 |
 | Editor grid | X 16, Y 17, preview yBase 20 | X 16, Y 20, preview yBase 0 (the editor's test grid matches what the sim shows) |
 | Fenix page position | X 52, Y 37 (hard-coded in the SimLogic Fenix scripts) | X 52, Y 20 |
@@ -172,7 +172,7 @@ magenta `#FF63FF`, red `#FF0000`, yellow `#FFFF00`.
 | `Connect the MCDU` / `No WinWing MCDU found on USB` | Plug the MCDU in (any USB port). The setup continues by itself once Windows sees it. |
 | `SimAppPro2 MCDU profile not found` | Start SimAppPro2 once with the MCDU plugged in, then run again. |
 | `SimAppPro2 did not create its MCDU settings` | Open the MCDU screen settings page once in SimAppPro2, close it, run again. |
-| `SimAppPro2 does not list FMGC-Pixel31m-…` | SimAppPro2 reads its font list at startup: restart it, run again. |
+| `SimAppPro2 does not list FMGC-Pixel31n-…` | SimAppPro2 reads its font list at startup: restart it, run again. |
 | `Unexpected format in fnx_…` | A SimAppPro2 update changed the scripts; that file was left untouched. The pattern to update is `SIM_POINT` in `setup_mcdu.py`. |
 | `SimAppPro2 is not answering` | Close SimAppPro2, then run again. |
 | `SimAppPro2 did not open its debug port` | Something else is using port 9333, or SimAppPro2 failed to start. Close SimAppPro2 and run again. |
@@ -184,7 +184,7 @@ To go back to the state before a run, see [Undo](#undo).
 - The WinWing MCDU is a **640 × 480** text-mode screen: it receives characters and draws the
   glyphs itself from a 1-bit font stored in its memory (`.wwf`).
 - SimAppPro2 converts the selected TrueType font by lighting every pixel the outline **touches**,
-  even by 1 %, which makes letters blobby. The `Pixel31m` fonts are drawn pixel by pixel so its
+  even by 1 %, which makes letters blobby. The `Pixel31n` fonts are drawn pixel by pixel so its
   conversion gives back exactly the intended design (verified: 111/111 glyphs per size).
 - The text position sent to the MCDU comes from two places: the editor (X/Y/yBase settings)
   **and** SimLogic, which after every Apply re-sends its own position, hard-coded in the Fenix
@@ -201,7 +201,7 @@ installer.bat            runs setup_mcdu.py with the installed Python
 build_exe.py             builds dist/WC-MCDU-Fenix-Patch/ and its .zip
 icon/                    the .exe icon and make_icon.py, which draws it
 .github/workflows/       CI: builds the .zip, publishes releases from version tags
-fonts/                   FMGC-Pixel31m-Large.ttf, FMGC-Pixel31m-Small.ttf
+fonts/                   FMGC-Pixel31n-Large.ttf, FMGC-Pixel31n-Small.ttf
 docs/                    README screenshots and render_screens.py
 backups/                 created by each run (git-ignored)
 dist/                    the built .exe folder and .zip (git-ignored)
