@@ -198,6 +198,7 @@ To go back to the state before a run, see [Undo](#undo).
 ```
 setup_mcdu.py            install / check / restore
 installer.bat            runs setup_mcdu.py with the installed Python
+LICENSE                  MIT
 build_exe.py             builds dist/WC-MCDU-Fenix-Patch/ and its .zip
 icon/                    the .exe icon and make_icon.py, which draws it
 .github/workflows/       CI: builds the .zip, publishes releases from version tags
@@ -251,3 +252,7 @@ For a new version, change the font name (e.g. `Pixel31n`): SimAppPro2 only reads
 startup and caches the old name. Replace both files in `fonts/` (a single `*-Large.ttf` /
 `*-Small.ttf` pair), then rebuild the `.exe`. If the cell size changes, the fonts must be
 redrawn for the new grid and `LAYOUT` in `setup_mcdu.py` updated.
+
+## License
+
+[MIT](LICENSE), including the fonts in `fonts/`. Not affiliated with WinWing or Fenix Simulations.
