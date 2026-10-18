@@ -207,6 +207,7 @@ To go back to the state before a run, see [Undo](#undo).
 setup_mcdu.py            install / check / restore
 installer.bat            runs setup_mcdu.py with the installed Python
 LICENSE                  MIT
+AGENTS.md                notes for coding agents (CLAUDE.md points to it)
 build_exe.py             builds dist/WC-MCDU-Fenix-Patch/ and its .zip
 icon/                    the .exe icon and make_icon.py, which draws it
 .github/workflows/       CI: builds the .zip, publishes releases from version tags
