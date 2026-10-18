@@ -259,7 +259,7 @@ icon/                    the .exe icon and make_icon.py, which draws it
 fonts/                   FMGC-Pixel31n-Large.ttf, FMGC-Pixel31n-Small.ttf
 fonts/src/               the fonts' source: one text bitmap per character
 fonts/make_ttf.py        builds the .ttf files from fonts/src/
-docs/                    README screenshots, photos, render_screens.py, flightsim.to page text
+docs/                    README screenshots, photos, render_screens.py, flightsim.to text and cover
 backups/                 created by each run (git-ignored)
 dist/                    the built .exe folder and .zip (git-ignored)
 ```

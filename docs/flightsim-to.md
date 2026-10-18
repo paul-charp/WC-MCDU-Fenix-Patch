@@ -64,8 +64,13 @@ Free and open source (MIT license). Not affiliated with WinWing or Fenix Simulat
 
 ## Images (upload order)
 
-1. `docs/perf-take-off.png` (cover)
-2. `docs/f-pln.png`
-3. `docs/glyphs.png`
+1. `docs/cover.png` (cover: the patched PERF TAKE OFF alone, 1920x1080)
+2. `docs/perf-take-off.png`
+3. `docs/f-pln.png`
+4. `docs/glyphs.png`
+
+All four come from `python docs/render_screens.py`.
+
+**Tags:** WinWing, WinCtrl, MCDU, Fenix, Fenix A320, A320, A319, A321, Airbus, SimAppPro2, MCDU font, pixel font, home cockpit, cockpit hardware, tool, MSFS 2024, MSFS 2020
 
 The photos (`docs/photo-*.jpg`) stay off flightsim.to: its rules don't allow real-life images.

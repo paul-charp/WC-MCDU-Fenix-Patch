@@ -1,4 +1,6 @@
 """Render the README screenshots: the MCDU screen as the device draws it, before and after the patch.
+Writes perf-take-off.png, f-pln.png, glyphs.png, and cover.png (the patched PERF TAKE OFF alone,
+1920x1080, for flightsim.to).
 
   python docs/render_screens.py
 
@@ -213,6 +215,17 @@ def stacked(panels, path):
     print(f"{os.path.relpath(path, HERE)}  {out.size[0]}x{out.size[1]}  {os.path.getsize(path) / 1e6:.1f} MB")
 
 
+def cover(im, path, top=70, size=(1920, 1080)):
+    """flightsim.to cover: one panel on the dark background, 16:9. The bezel picture is cut at the
+    bottom, so that edge stays flush with the bottom of the image."""
+    h = im.height + top
+    w = round(h * size[0] / size[1])
+    out = Image.new("RGB", (max(w, im.width), h), (13, 17, 23))
+    out.paste(im, ((out.width - im.width) // 2, top))
+    out.resize(size, Image.LANCZOS).save(path, optimize=True)
+    print(f"{os.path.relpath(path, HERE)}  {size[0]}x{size[1]}  {os.path.getsize(path) / 1e6:.1f} MB")
+
+
 def main():
     stock, patched = load_font(STOCK_WWF), load_font(PATCHED_WWF)
     cal = calibrate(patched)
@@ -222,8 +235,11 @@ def main():
              "FMGC Pixel31n: pixel font custom-made for the WinCtrl MCDU to match the Fenix font at the pixel level; "
              "23×31 cells, Fenix pages at X 52 Y 20")
     for name, page in (("perf-take-off", PERF_TAKE_OFF), ("f-pln", F_PLN)):
+        patched_panel = in_bezel(draw_screen(page, patched, PATCHED_ORIGIN), cal)
         stacked([(*before, in_bezel(draw_screen(page, stock, STOCK_ORIGIN), cal)),
-                 (*after, in_bezel(draw_screen(page, patched, PATCHED_ORIGIN), cal))], os.path.join(HERE, f"{name}.png"))
+                 (*after, patched_panel)], os.path.join(HERE, f"{name}.png"))
+        if name == "perf-take-off":
+            cover(patched_panel, os.path.join(HERE, "cover.png"))
     stacked([("Before", "WinWing stock font: large green, small cyan", draw_glyph_sheet(stock, 6)),
              ("After", "FMGC Pixel31n, custom-made to match the Fenix font: large green, small cyan", draw_glyph_sheet(patched, 6))],
             os.path.join(HERE, "glyphs.png"))
