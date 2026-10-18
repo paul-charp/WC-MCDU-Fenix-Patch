@@ -211,6 +211,8 @@ build_exe.py             builds dist/WC-MCDU-Fenix-Patch/ and its .zip
 icon/                    the .exe icon and make_icon.py, which draws it
 .github/workflows/       CI: builds the .zip, publishes releases from version tags
 fonts/                   FMGC-Pixel31n-Large.ttf, FMGC-Pixel31n-Small.ttf
+fonts/src/               the fonts' source: one text bitmap per character
+fonts/make_ttf.py        builds the .ttf files from fonts/src/
 docs/                    README screenshots, photos, render_screens.py, flightsim.to page text
 backups/                 created by each run (git-ignored)
 dist/                    the built .exe folder and .zip (git-ignored)
@@ -258,10 +260,33 @@ setup is installed. Needs Pillow.
 
 ## Updating the fonts
 
-For a new version, change the font name (e.g. `Pixel31n`): SimAppPro2 only reads its fonts at
-startup and caches the old name. Replace both files in `fonts/` (a single `*-Large.ttf` /
-`*-Small.ttf` pair), then rebuild the `.exe`. If the cell size changes, the fonts must be
-redrawn for the new grid and `LAYOUT` in `setup_mcdu.py` updated.
+The fonts are built from text bitmaps in `fonts/src/`, one file per size. Each character is a
+block of 31 rows × 23 columns, one per MCDU pixel: `#` is lit, `.` is off. The line
+`baseline: 28.3` puts the baseline 28.3 px from the top of the cell, so capitals end on row 27 (rows count from 0).
+
+```
+U+0041 A
+..........###..........
+.........#####.........
+.........##.##.........
+```
+
+To change a glyph, edit its rows and rebuild (needs `pip install fonttools`):
+
+```
+python fonts/make_ttf.py           build fonts/*.ttf from fonts/src/*.txt
+python fonts/make_ttf.py --check   check that fonts/*.ttf match fonts/src/ (CI runs this)
+```
+
+Each lit pixel becomes a square inset 0.25 px from the pixel edges, at 100 font units per pixel.
+SimAppPro2 lights every pixel an outline touches, so at scale 1.0 its conversion gives back
+exactly these bitmaps.
+
+For a new version, change the font name (e.g. `Pixel31o`): SimAppPro2 only reads its fonts at
+startup and caches the old name. Rename both `fonts/src/*.txt` files and their `family:` line,
+build, delete the old `.ttf` files (`fonts/` must hold a single `*-Large.ttf` / `*-Small.ttf`
+pair), then rebuild the `.exe`. If the cell size changes, `LAYOUT` in `setup_mcdu.py` must be
+updated too.
 
 ## License
 

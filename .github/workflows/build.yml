@@ -24,7 +24,10 @@ jobs:
           python-version: "3.13"
 
       - name: Install build tools
-        run: python -m pip install --disable-pip-version-check pyinstaller rich websocket-client
+        run: python -m pip install --disable-pip-version-check pyinstaller rich websocket-client fonttools
+
+      - name: Check fonts match fonts/src
+        run: python fonts/make_ttf.py --check
 
       - name: Build
         shell: bash
