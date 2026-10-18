@@ -1,9 +1,11 @@
 """Install the WinWing MCDU setup for the Fenix A320 on SimAppPro2.
 
-  python setup_mcdu.py               install / re-apply everything
+  python setup_mcdu.py               menu: check, install, height adjust, reset
   python setup_mcdu.py --check       check the current state, change nothing
-  python setup_mcdu.py --y 18        use another vertical text position (default 20)
+  python setup_mcdu.py --install     install / re-apply everything (no menu)
+  python setup_mcdu.py --install --offset 2   install with the text 2 px higher (negative: lower)
   python setup_mcdu.py --restore backups\\20261015-213000   put a backup back
+  python setup_mcdu.py --factory-reset    WinWing's font, layout and colours, Fenix pages at Y 37
 
 Also built as a standalone WC-MCDU-Fenix-Patch.exe (build_exe.py), with the same arguments.
 
@@ -34,6 +36,8 @@ UI_ASSETS = os.path.join(EXT, "WWTEx_ui", "assets")
 DEBUG_PORT = 9333
 
 DEFAULT_Y = 20
+STOCK_Y = 37            # SimLogic's own Fenix page position
+Y_RANGE = (0, 46)       # 14 rows of 31 px must fit the 480-px screen; SimAppPro2 rejects negative values
 LAYOUT = {"scX": 16, "matrixW": 23, "matrixH": 31}      # + scY = chosen Y position
 PREVIEW_YBASE = 0       # so the editor's test grid matches what the sim shows
 FONT_SLOT = {"xScale": 1, "yScale": 1, "xShift": 0, "yShift": 0}
@@ -567,7 +571,8 @@ def check(gx, y, large, small):
         rows.append((good_grid, "Grid", fmt(lay, ybase) + ("" if good_grid else f"  (expected {fmt(expected, PREVIEW_YBASE)})")))
         cols = {c["colorName"]: c["currentColor"].upper() for c in cfg["colorConfig"]["colorArray"]}
         off = [c for c, v in FENIX_COLOURS.items() if cols.get(c) != v]
-        rows.append((not off, "Colours", "Fenix" if not off else f"different: {', '.join(off)}"))
+        rows.append((not off, "Colours", "Fenix (same as WinWing's defaults)" if not off
+                     else f"different: {', '.join(off)}"))
 
     scripts = mcdu_workflows()
     ys = []
@@ -583,28 +588,128 @@ def check(gx, y, large, small):
     return rows
 
 
+# ------------------------------------------------------------------ state
+def offset_of(y):
+    """Height offset shown to the user: 0 = default position, positive = text higher."""
+    return DEFAULT_Y - y
+
+
+def fmt_offset(y):
+    o = offset_of(y)
+    return f"{o:+d} px" if o else "0"
+
+
+def y_of(offset):
+    return DEFAULT_Y - offset
+
+
+def installed_y(gx):
+    """The Y position saved by a previous install (or height adjust), or None."""
+    cfg_path = os.path.join(mcdu_settings(gx), "default_config.json")
+    if not os.path.exists(cfg_path):
+        return None
+    cfg = load_json(cfg_path)
+    lay = cfg.get("layoutConfig", {})
+    ours = lay.get("matrixH") == LAYOUT["matrixH"] and cfg.get("previewConfig", {}).get("yBase") == PREVIEW_YBASE
+    return lay.get("scY") if ours and isinstance(lay.get("scY"), int) else None
+
+
+def chosen_y(gx, y=None):
+    if y is not None:
+        return y
+    saved = installed_y(gx)
+    return saved if saved is not None else DEFAULT_Y
+
+
+def status(gx, y=None):
+    """(y, check rows, everything ok, everything but the Fenix page position ok)."""
+    large, small = font_files()
+    y = chosen_y(gx, y)
+    rows = check(gx, y, large, small)
+    return y, rows, all(r[0] for r in rows), all(r[0] for r in rows[:-1])
+
+
+def set_y(gx, y):
+    """Write Y to the editor layout (where the next install reads it back) and the font set."""
+    cfg_path = os.path.join(mcdu_settings(gx), "default_config.json")
+    cfg = load_json(cfg_path)
+    cfg["layoutConfig"]["scY"] = y
+    save_json(cfg_path, cfg)
+    _, set_cfg, _ = selected_font_set(gx)
+    if os.path.exists(set_cfg):
+        d = load_json(set_cfg)
+        d["pixelConfig"]["scY"] = y
+        save_json(set_cfg, d)
+
+
+def backups():
+    """Backup folders, newest first."""
+    root = os.path.join(HERE, "backups")
+    if not os.path.isdir(root):
+        return []
+    return sorted((os.path.join(root, d) for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))),
+                  reverse=True)
+
+
+def describe_backup(path):
+    """Short description of what a backup holds: patch version and Y, or WinWing settings."""
+    try:
+        cfg = load_json(os.path.join(path, "customer_default", "default_config.json"))
+        name = cfg["fontConfig"]["fontSelected"]
+        fonts = load_json(os.path.join(path, "customer_default", "EditSpace", name, f"{name}_config.json"))
+        font = fonts["largeFontConfig"]["pcFontSelected"]
+    except (OSError, KeyError, ValueError):
+        return ""
+    if font.endswith("-Large") and cfg["layoutConfig"].get("matrixH") == LAYOUT["matrixH"]:
+        return f"{font[:-6]}, Y {cfg['layoutConfig'].get('scY')}"
+    return "WinWing settings" if font == name else f"font {font}"
+
+
+def read_key():
+    """One key press: 'up', 'down', 'pgup', 'pgdn', 'enter', 'esc', 'ctrl-c' or the character (lower case)."""
+    import msvcrt
+    ch = msvcrt.getwch()
+    if ch in ("\x00", "\xe0"):
+        return {"H": "up", "P": "down", "I": "pgup", "Q": "pgdn"}.get(msvcrt.getwch(), "")
+    return {"\r": "enter", "\x1b": "esc", "\x03": "ctrl-c"}.get(ch, ch.lower())
+
+
+def send_with_api(tick, body, expected, what):
+    """Start SimAppPro2 in setup mode, run `body` (JS returning status codes), wait for SimLogic."""
+    start_app(debug=True, tick=lambda f, n: tick(0.5 * f, n))
+    app = App()
+    app.wait_ready(tick=lambda f, n: tick(0.5 + 0.1 * f, n))
+    tick(0.6, "sending to the MCDU")
+    # the CDU_* calls fail (status 1) until the settings and font list are loaded
+    res = app.call("await api.CDU_getConfig({isFileSync: true}); await api.CDU_getFontArray(); " + body)
+    if res != [0] * expected:
+        raise SetupError(f"SimAppPro2 refused to {what} (codes {res}).")
+    wait(10, tick, 0.7, 1.0, "SimLogic re-sending the Fenix layout")
+
+
 # ------------------------------------------------------------------ commands
 def cmd_check(ui, gx, y):
-    large, small = font_files()
+    large, _ = font_files()
     mcdu = connected_mcdu()
+    y, rows, ok, _ = status(gx, y)
     ui.header("WinWing MCDU · Fenix A320 · status",
               [("SimAppPro2", "found"), ("MCDU", f"connected ({mcdu})" if mcdu else "[yellow]not connected[/]"),
-               ("Expected", f"fonts {font_name(large)[:-6]}, Y {y}")])
-    rows = check(gx, y, large, small)
+               ("Expected", f"fonts {font_name(large)[:-6]}, height offset {fmt_offset(y)} (Y {y})")])
     ui.report(rows)
-    ok = all(r[0] for r in rows)
-    fix = f"run {os.path.basename(sys.executable)} again" if FROZEN else "run installer.bat"
+    fix = "run Full install" if FROZEN or sys.stdin.isatty() else "run installer.bat"
     ui.verdict(ok, "[bold green]Everything is in place.[/]", f"[bold red]Needs fixing:[/] {fix}")
     return ok
 
 
 def cmd_install(ui, gx, y):
     large, small = font_files()
+    y = chosen_y(gx, y)
     mcdu = wait_for_mcdu(ui)                            # the fonts are sent to it in step 6
     ui.header("WinWing MCDU · Fenix A320 · setup",
               [("MCDU", f"connected ({mcdu})"),
                ("Fonts", f"{font_name(large)} / {font_name(small)}"),
                ("Grid", f"X {LAYOUT['scX']}  Y {y}  {LAYOUT['matrixW']}x{LAYOUT['matrixH']} cells"),
+               ("Height", f"offset {fmt_offset(y)}" + ("  (default)" if y == DEFAULT_Y else "")),
                ("Colours", "Fenix web MCDU"),
                ("SimAppPro2", "will be closed and restarted (under a minute)")])
     plan = [("Close SimAppPro2", 6), ("Back up current settings", 3), ("Install fonts", 2),
@@ -631,11 +736,129 @@ def cmd_install(ui, gx, y):
     return ok
 
 
+def cmd_height(ui, gx):
+    """Move the Fenix pages up or down on the MCDU, live, without sending the fonts again."""
+    y0, _, _, base_ok = status(gx)
+    if not base_ok:
+        raise SetupError("Height adjust needs a full install first (fonts, grid and colours).")
+    mcdu = wait_for_mcdu(ui)
+    lo, hi = offset_of(Y_RANGE[1]), offset_of(Y_RANGE[0])
+    ui.header("WinWing MCDU · Fenix A320 · height adjust",
+              [("MCDU", f"connected ({mcdu})"), ("Offset", fmt_offset(y0) + ("  (default)" if y0 == DEFAULT_Y else "")),
+               ("SimAppPro2", "restarted in setup mode while you adjust")])
+    ui.notice("Before you start", "Start the Fenix and show a page with text on all lines next to the keys,\n"
+                                  "for example INIT or PERF TAKE OFF, so you can see where the lines sit.")
+    with ui.console.status("Starting SimAppPro2 in setup mode...", spinner_style="cyan"):
+        backup(gx)
+        stop_app()
+        start_app(debug=True)
+        app = App()
+        app.wait_ready()
+
+    def apply(y):
+        patch_simlogic(y)
+        res = app.call(f"""
+            const c = await api.CDU_getConfig({{isFileSync: true}}); await api.CDU_getFontArray();
+            const l = c.data.layoutConfig;
+            const r = await api.CDU_setLayoutConfig({{scX: l.scX, scY: {y}, matrixW: l.matrixW, matrixH: l.matrixH}});
+            const a = await api.CDU_applyLayout();
+            return [r && r.status, a && a.status];""")
+        if res != [0, 0]:
+            raise SetupError(f"SimAppPro2 refused the new position (codes {res}).")
+
+    applied, saved = y0, False
+    ui.console.print(f"\n  Type an offset in pixels and press [bold]Enter[/] to see it on the MCDU:\n"
+                     f"  [bold]0[/] = default, [bold]positive[/] = text up, [bold]negative[/] = text down"
+                     f" ({lo:+d} to {hi:+d}).\n"
+                     f"  [bold]Enter[/] alone: keep the offset shown and quit.   [bold]C[/]: cancel, put back"
+                     f" {fmt_offset(y0)}.\n")
+    try:
+        while True:
+            answer = ui.console.input(f"  Offset [bold cyan]{fmt_offset(applied)}[/] > ").strip().lower()
+            if answer == "":
+                saved = True
+                break
+            if answer in ("c", "q"):
+                break
+            try:
+                offset = int(answer.replace(" ", ""))
+            except ValueError:
+                ui.console.print("  [yellow]A whole number, for example 2 or -3.[/]")
+                continue
+            if not lo <= offset <= hi:
+                ui.console.print(f"  [yellow]Between {lo:+d} and {hi:+d}.[/]")
+                continue
+            with ui.console.status("Sending to the MCDU...", spinner_style="cyan"):
+                apply(y_of(offset))
+            applied = y_of(offset)
+    except (KeyboardInterrupt, EOFError):
+        saved = False
+    finally:
+        with ui.console.status("Restarting SimAppPro2...", spinner_style="cyan"):
+            final = applied if saved else y0
+            patch_simlogic(final)
+            stop_app()
+            set_y(gx, final)                            # also where the next install reads it back
+            start_app()
+    ui.verdict(True, f"[bold green]Saved: offset {fmt_offset(applied)}.[/] A full install keeps it." if saved
+               else f"Nothing changed: offset {fmt_offset(y0)}.", "")
+
+
+def cmd_factory_reset(ui, gx):
+    mcdu = wait_for_mcdu(ui)
+    ui.header("WinWing MCDU · Fenix A320 · factory reset",
+              [("MCDU", f"connected ({mcdu})"),
+               ("Resets", "WinWing font, layout, colours and page position"),
+               ("SimAppPro2", "will be closed and restarted (under a minute)")])
+
+    def reset(tick):
+        send_with_api(tick, """
+            const codes = [];
+            for (const f of ['CDU_resetLayout', 'CDU_resetFont', 'CDU_resetColor']) {
+              const r = await api[f](); codes.push(r && r.status);
+            }
+            // as in send_fonts: the font set is only rasterised when its pixels are read
+            const set = (await api.CDU_getConfig({isFileSync: true})).data.fontConfig.fontSelected;
+            await api.CDU_getFontArray(); await api.CDU_getFontConfigWithPixel({fontName: set});
+            for (const f of ['CDU_applyLayout', 'CDU_applyFont', 'CDU_applyColor']) {
+              const r = await api[f](); codes.push(r && r.status);
+            }
+            return codes;""", 6, "reset or send the defaults")
+        return "WinWing defaults sent"
+
+    def remove_fonts():
+        stop_app()                                      # SimAppPro2 keeps its font list open
+        mirror = os.path.join(gx, "Windows", "Fonts")
+        gone = glob.glob(os.path.join(mirror, "FMGC-Pixel*.ttf"))
+        for f in gone:
+            os.remove(f)
+        return f"{len(gone)} removed from SimAppPro2's font list"
+
+    plan = [("Close SimAppPro2", 6), ("Back up current settings", 3), ("Fenix page position", 2),
+            ("Reset font, layout, colours", 60), ("Remove the patch fonts", 6), ("Restart SimAppPro2", 8)]
+    with ui.steps(plan) as s:
+        try:
+            s.run(close_app)
+            s.run(backup, gx)
+            s.run(patch_simlogic, STOCK_Y)
+            s.run(reset)
+            s.run(remove_fonts)
+        except BaseException:
+            stop_app()
+            start_app()
+            raise
+        s.run(restart_app)
+    ui.verdict(True, "[bold green]Done: SimAppPro2 is back to WinWing's settings.[/]\n"
+                     "Your previous settings are in the backup above (Reset › A backup).", "")
+
+
 def cmd_restore(ui, gx, src):
     src = src if os.path.isabs(src) else os.path.join(HERE, src)
     if not os.path.isdir(src):
         raise SetupError(f"Backup not found: {src}")
-    ui.header("WinWing MCDU · Fenix A320 · restore", [("Backup", os.path.relpath(src, HERE))])
+    mcdu = wait_for_mcdu(ui)
+    ui.header("WinWing MCDU · Fenix A320 · restore",
+              [("MCDU", f"connected ({mcdu})"), ("Backup", os.path.relpath(src, HERE))])
 
     def put_back():
         if os.path.isdir(os.path.join(src, "customer_default")):
@@ -645,21 +868,150 @@ def cmd_restore(ui, gx, src):
         for dp, _, files in os.walk(wf):
             for f in files:
                 shutil.copy2(os.path.join(dp, f), os.path.join(WORKFLOWS, os.path.relpath(os.path.join(dp, f), wf)))
+        # a backup of the patch selects its fonts: put them back in SimAppPro2's list (factory reset removes them)
+        mirror = os.path.join(gx, "Windows", "Fonts")
+        _, set_cfg, _ = selected_font_set(gx)
+        d = load_json(set_cfg) if os.path.exists(set_cfg) else {}
+        used = [d[k]["pcFontSelected"] for k in ("largeFontConfig", "smallFontConfig") if k in d]
+        for f in glob.glob(os.path.join(BUNDLED, "fonts", "*.ttf")):
+            if font_name(f) in used:
+                os.makedirs(mirror, exist_ok=True)
+                shutil.copy2(f, mirror)
+        # fonts it can rasterise again: in the font list, or the set's own (WinWing's WWT_MCDU)
+        state["raster"] = all(os.path.exists(os.path.join(mirror, f + ".ttf"))
+                              or os.path.exists(os.path.join(os.path.dirname(set_cfg), f + ".ttf")) for f in used)
         return "settings and SimLogic scripts"
 
-    with ui.steps([("Close SimAppPro2", 4), ("Put the files back", 2), ("Restart SimAppPro2", 2)]) as s:
-        s.run(close_app)
-        s.run(put_back)
-        s.run(lambda: (start_app(), "running")[1])
-    ui.verdict(True, "Restored. Press [bold]Apply[/] on the MCDU font page to send these settings to the MCDU.", "")
+    state = {}
+
+    def send(tick):
+        raster = "true" if state.get("raster") else "false"
+        send_with_api(tick, f"""
+            // as in send_fonts: the font set is only rasterised when its pixels are read; skipped when the
+            // backup's fonts are gone (older patch version): its saved pixels are sent as they are
+            const set = (await api.CDU_getConfig({{isFileSync: true}})).data.fontConfig.fontSelected;
+            await api.CDU_getFontArray();
+            if ({raster}) await api.CDU_getFontConfigWithPixel({{fontName: set}});
+            const codes = [];
+            for (const f of ['CDU_applyLayout', 'CDU_applyFont', 'CDU_applyColor']) {{
+              const r = await api[f](); codes.push(r && r.status);
+            }}
+            return codes;""", 3, "send the restored settings")
+        return "font, layout and colours"
+
+    with ui.steps([("Close SimAppPro2", 6), ("Put the files back", 2), ("Send to the MCDU", 60),
+                   ("Restart SimAppPro2", 8)]) as s:
+        try:
+            s.run(close_app)
+            s.run(put_back)
+            s.run(send)
+        except BaseException:
+            stop_app()
+            start_app()
+            raise
+        s.run(restart_app)
+    ui.verdict(True, "[bold green]Restored.[/]", "")
+
+
+def choose_backup(ui):
+    """Let the user pick one of the 9 newest backups; None to go back."""
+    found = backups()[:9]
+    if not found:
+        ui.notice("No backups", "Nothing in backups\\ yet: every install, height adjust or reset makes one.")
+        return None
+    ui.console.print("\n  [bold]Backups[/], newest first: the state before each install, adjust or reset\n")
+    for i, path in enumerate(found, 1):
+        name = os.path.basename(path)
+        when = (time.strftime("%d %b %Y  %H:%M:%S", time.strptime(name, "%Y%m%d-%H%M%S"))
+                if re.fullmatch(r"\d{8}-\d{6}", name) else name)
+        ui.console.print(f"  [bold cyan]{i}[/]  {when}   [dim]{describe_backup(path)}[/]")
+    ui.console.print("  [bold cyan]B[/]  back\n")
+    while True:
+        key = read_key()
+        if key in ("b", "esc"):
+            return None
+        if key.isdigit() and 1 <= int(key) <= len(found):
+            return found[int(key) - 1]
+
+
+def menu(ui, gx):
+    """Start menu for a double-click; returns when the user quits."""
+    while True:
+        y, rows, ok, base_ok = status(gx)
+        mcdu = connected_mcdu()
+        if ok:
+            state = f"[green]installed[/], height offset {fmt_offset(y)}"
+        elif base_ok:
+            state = "[yellow]Fenix page position reset (SimAppPro2 update?): run Full install[/]"
+        # fonts left in SimAppPro2's list and WinWing's default colours (same as Fenix) don't count
+        elif any(ok_ for ok_, item, _ in rows if item in ("Fonts selected", "Font sent to MCDU", "Grid")):
+            state = "[yellow]partly installed: run Full install[/]"
+        else:
+            state = "not installed (WinWing settings)"
+        ui.console.clear()
+        ui.header("WinWing MCDU · Fenix A320", [
+            ("MCDU", f"connected ({mcdu})" if mcdu else "[yellow]not connected[/]"),
+            ("Patch", state)])
+        items = [("1", "Check only", "show what is installed, change nothing"),
+                 ("2", "Full install", "fonts, layout, colours, page position (about 1 min)"),
+                 ("3", "Height adjust", "move the Fenix pages up or down" if base_ok
+                  else "after a full install"),
+                 ("4", "Reset", "WinWing factory settings, or a backup"),
+                 ("Q", "Quit", "")]
+        ui.console.print()
+        for k, label, help_ in items:
+            name = f"[dim]{label:<15}[/]" if k == "3" and not base_ok else f"{label:<15}"
+            ui.console.print(f"  [bold cyan]{k}[/]  {name} [dim]{help_}[/]")
+        ui.console.print()
+        key = read_key()
+        if key in ("q", "esc", "ctrl-c"):
+            return
+        try:
+            if key == "1":
+                cmd_check(ui, gx, None)
+            elif key == "2":
+                cmd_install(ui, gx, None)
+            elif key == "3" and base_ok:
+                cmd_height(ui, gx)
+            elif key == "4":
+                ui.console.print("\n  [bold cyan]1[/]  Factory settings   [dim]WinWing font, layout, colours;"
+                                 " page position[/]\n"
+                                 "  [bold cyan]2[/]  A backup           [dim]the state before an install,"
+                                 " adjust or reset[/]\n  [bold cyan]B[/]  back\n")
+                sub = read_key()
+                while sub not in ("1", "2", "b", "esc"):
+                    sub = read_key()
+                if sub == "1":
+                    cmd_factory_reset(ui, gx)
+                elif sub == "2" and (src := choose_backup(ui)):
+                    cmd_restore(ui, gx, src)
+                else:
+                    continue
+            else:
+                continue
+        except SetupError as e:
+            ui.error("Stopped", str(e))
+        except KeyboardInterrupt:
+            ui.error("Interrupted", "Stopped by the user. SimAppPro2 was restarted normally if needed.")
+        ui.console.input("[dim]Press Enter to return to the menu...[/]")
 
 
 def main():
-    ap = argparse.ArgumentParser(description="WinWing MCDU setup for the Fenix A320 (SimAppPro2)")
+    ap = argparse.ArgumentParser(description="WinWing MCDU setup for the Fenix A320 (SimAppPro2). "
+                                             "Without options: a menu.")
     ap.add_argument("--check", action="store_true", help="check the current state without changing anything")
-    ap.add_argument("--y", type=int, default=DEFAULT_Y, help=f"vertical text position (default {DEFAULT_Y})")
+    ap.add_argument("--install", action="store_true", help="install / re-apply everything, no menu")
+    ap.add_argument("--offset", type=int, help="height offset in px: 0 = default, positive = text up, negative = "
+                                               "down (default: the installed one)")
+    ap.add_argument("--y", type=int, help=argparse.SUPPRESS)          # raw position, = 20 - offset
     ap.add_argument("--restore", metavar="BACKUP", help="put back the files of a backup (backups\\... folder)")
+    ap.add_argument("--factory-reset", action="store_true",
+                    help="WinWing's font, layout, colours and Fenix page position")
     a = ap.parse_args()
+    if a.offset is not None:
+        a.y = y_of(a.offset)
+    if a.y is not None and not Y_RANGE[0] <= a.y <= Y_RANGE[1]:
+        ap.error(f"--offset must be between {offset_of(Y_RANGE[1])} and {offset_of(Y_RANGE[0])}")
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except AttributeError:
@@ -683,7 +1035,13 @@ def main():
         if a.restore:
             cmd_restore(ui, gx, a.restore)
             return 0
-        return 0 if cmd_install(ui, gx, a.y) else 1
+        if a.factory_reset:
+            cmd_factory_reset(ui, gx)
+            return 0
+        if a.install or a.y is not None or not sys.stdin.isatty():
+            return 0 if cmd_install(ui, gx, a.y) else 1
+        menu(ui, gx)
+        return -1                                       # left the menu with Q: no "Press Enter" prompt
     except SetupError as e:
         ui.error("Setup stopped", str(e))
         return 2
@@ -710,7 +1068,9 @@ def own_console():
 
 if __name__ == "__main__":
     code = main()
-    if own_console() and sys.stdin.isatty():
+    if code == -1:                                      # left the menu with Q
+        code = 0
+    elif own_console() and sys.stdin.isatty():
         try:
             input("Press Enter to close...")
         except EOFError:

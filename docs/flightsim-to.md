@@ -16,7 +16,7 @@ A one-click setup that makes the **WinWing (WinCtrl) MCDU** screen look like the
 
 - **FMGC Pixel31n**: a pixel font made for the MCDU to match the Fenix font pixel for pixel. No more blobby letters.
 - **Fenix colours**: amber, cyan, green, magenta and the rest, as in the Fenix web MCDU.
-- **Lines aligned with the keys**: the Fenix pages are moved up so each data line sits next to its line-select key.
+- **Lines aligned with the keys**: the Fenix pages are moved up so each data line sits next to its line-select key, with a height adjust to fine-tune it on your own MCDU.
 
 The font isn't the Fenix font: it was redrawn pixel by pixel on the MCDU's grid to match its look.
 
@@ -39,13 +39,15 @@ This is **not** a Community folder addon: don't put it in your Community folder.
 2. Plug in the MCDU. SimAppPro2 and the sim can stay open.
 3. Double-click **`WC-MCDU-Fenix-Patch.exe`**.
    - If Windows shows *"Windows protected your PC"*, click **More info**, then **Run anyway**. The program isn't code-signed.
-4. Wait about a minute. SimAppPro2 closes and reopens on its own, so leave it alone.
-5. When the window says **Done: everything is in place.**, press **Enter**.
+4. In the menu, press **2** (Full install).
+5. Wait about a minute. SimAppPro2 closes and reopens on its own, so leave it alone.
+6. When the window says **Done: everything is in place.**, press **Enter**, then **Q**.
 
 ## Good to know
 
-- **After a SimAppPro2 update, run the patch again.** The update resets the Fenix page position. Your fonts and colours stay.
-- **Undo:** every run first saves your current settings in a `backups` folder next to the `.exe`. The GitHub page explains how to restore them.
+- **Height adjust:** with the Fenix running, press **3** and type an offset in pixels (0 = default, positive = text up, negative = down) until each line sits next to its key. A full install keeps it.
+- **After a SimAppPro2 update, run Full install again.** The update resets the Fenix page position. Your fonts, colours and height offset stay.
+- **Undo:** every install, adjust or reset first saves your current settings in a `backups` folder next to the `.exe`. Press **4** (Reset) to put a backup back, or to go back to WinWing's factory settings.
 - **Antivirus:** some antivirus tools flag Python-built programs as a false positive. You can allow the program, or check and run the source code from GitHub yourself.
 - **What it changes:** only SimAppPro2's MCDU settings, its font folder and its Fenix MCDU scripts (SimLogic). It does **not** touch the Fenix, MSFS or your Community folder.
 - Tested on MSFS 2024 with the Captain MCDU.

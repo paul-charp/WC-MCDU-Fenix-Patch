@@ -7,8 +7,12 @@ SimAppPro2 only (never SimAppPro v1, never Fenix or MSFS files). Windows only. U
 
 ## Layout
 
-- `setup_mcdu.py`: the whole setup (install, `--check`, `--y N`, `--restore`). Python 3, `rich` +
-  `websocket-client`; runs as the PyInstaller `.exe` too (`FROZEN` / `BUNDLED` paths).
+- `setup_mcdu.py`: the whole setup. No options (and a console): a menu with Check only, Full
+  install, Height adjust (typed offset, live, no font resend) and Reset (factory settings or a
+  backup). Options: `--check`, `--install`, `--offset N`, `--restore`, `--factory-reset`; no options
+  without a console = install. Height offset = 20 − Y, saved in the editor layout `scY`, which the
+  next install reads back. Python 3, `rich` + `websocket-client`; runs as the PyInstaller `.exe`
+  too (`FROZEN` / `BUNDLED` paths).
 - `fonts/*.ttf`: the shipped pair (exactly one `*-Large.ttf` and one `*-Small.ttf`).
   `fonts/src/*.txt` is their source (23x31 `#`/`.` bitmaps); `fonts/make_ttf.py` builds them,
   `--check` verifies them (CI runs it). Needs fontTools.
@@ -44,6 +48,9 @@ SimAppPro2 only (never SimAppPro v1, never Fenix or MSFS files). Windows only. U
   from an async function; wrap it.
 - `CDU_setFontConfigByKey` only records a font. Call `CDU_getFontConfigWithPixel` before
   `CDU_saveFontConfigByKey` / `CDU_applyFont`, or the previous font's cached pixels are sent.
+- The `CDU_*` calls fail (status 1) until `CDU_getConfig({isFileSync: true})` and
+  `CDU_getFontArray()` have loaded the settings in that session. `CDU_resetFont` and a restored
+  font set also need `CDU_getFontConfigWithPixel` before `CDU_applyFont`, or an empty font is sent.
 - For a few seconds after start the back end answers "The peer 17 is not online": wait for
   `CDU_getPcFontArray` to succeed (`App.wait_ready`).
 - SimAppPro2 reads its font list (`GameExtendDisplay/Windows/Fonts`) at startup only.
@@ -53,8 +60,9 @@ SimAppPro2 only (never SimAppPro v1, never Fenix or MSFS files). Windows only. U
 
 ## Testing
 
-- `python setup_mcdu.py --check`: read-only state check.
-- Full install: `python setup_mcdu.py` with the MCDU plugged in (about a minute; closes and
+- `python setup_mcdu.py --check`: read-only state check. Never run `python setup_mcdu.py` without
+  options from a non-interactive shell: with no console it starts a full install.
+- Full install: `python setup_mcdu.py --install` with the MCDU plugged in (about a minute; closes and
   restarts SimAppPro2). Confirm on the real MCDU with the Fenix running.
 - `python fonts/make_ttf.py --check` after any font edit; `python build_exe.py` then
   `dist\WC-MCDU-Fenix-Patch\WC-MCDU-Fenix-Patch.exe --check` for the frozen build.

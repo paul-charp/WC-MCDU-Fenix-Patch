@@ -67,20 +67,40 @@ Nothing else: no Python or other software to install.
 4. **Double-click `WC-MCDU-Fenix-Patch.exe`** in the unzipped folder.
    - First time only, if Windows shows *"Windows protected your PC"*: click **More info**, then
      **Run anyway**. (The program is not code-signed.)
-5. **Wait about a minute** while the progress bar runs. Leave SimAppPro2 alone: it closes and
+5. In the menu, **press 2** (Full install).
+6. **Wait about a minute** while the progress bar runs. Leave SimAppPro2 alone: it closes and
    reopens on its own.
-6. When the window shows **Done: everything is in place.**, press **Enter** to close it. The MCDU
-   now shows the new font, colours and layout.
+7. When the window shows **Done: everything is in place.**, press **Enter** to go back to the menu,
+   then **Q** to close it. The MCDU now shows the new font, colours and layout.
+
+If the lines don't sit quite right next to the keys on your MCDU, use
+[Height adjust](#height-adjust).
 
 If a line shows ✘, or the setup stops with a message, see [Troubleshooting](#troubleshooting).
 
-A successful run looks like this:
+The menu:
+
+```
+╭─ WinWing MCDU · Fenix A320 ─────────╮
+│  MCDU   connected (Captain)         │
+│  Patch  installed, height offset 0  │
+╰─────────────────────────────────────╯
+
+  1  Check only      show what is installed, change nothing
+  2  Full install    fonts, layout, colours, page position (about 1 min)
+  3  Height adjust   move the Fenix pages up or down
+  4  Reset           WinWing factory settings, or a backup
+  Q  Quit
+```
+
+A successful install looks like this:
 
 ```
 ╭─ WinWing MCDU · Fenix A320 · setup ─────────────────────────╮
 │  MCDU        connected (Captain)                            │
 │  Fonts       FMGC-Pixel31n-Large / FMGC-Pixel31n-Small      │
 │  Grid        X 16  Y 20  23x31 cells                        │
+│  Height      offset 0  (default)                            │
 │  Colours     Fenix web MCDU                                 │
 │  SimAppPro2  will be closed and restarted (under a minute)  │
 ╰─────────────────────────────────────────────────────────────╯
@@ -98,7 +118,7 @@ Check
    ✔  Fonts selected          set WWT_MCDU, scale 1, no shift
    ✔  Font sent to MCDU       23x31 cells
    ✔  Grid                    X 16  Y 20  23x31  yBase 0
-   ✔  Colours                 Fenix
+   ✔  Colours                 Fenix (same as WinWing's defaults)
    ✔  Fenix pages (SimLogic)  Y 20 in all 26 scripts
 
 ╭─────────────────────────────────╮
@@ -108,33 +128,52 @@ Check
 
 ### After a SimAppPro2 update
 
-**Run `WC-MCDU-Fenix-Patch.exe` again** (step 4). SimAppPro2 updates replace its Fenix scripts, which
-puts the Fenix pages back at their old position (Y 37); the fonts and colours stay.
+**Run `WC-MCDU-Fenix-Patch.exe` again and press 2** (Full install). SimAppPro2 updates replace its
+Fenix scripts, which puts the Fenix pages back at WinWing's position (the menu shows *Fenix page
+position reset*); the fonts and colours stay. Your height offset is kept.
 
 ### Updating to a new version of this patch
 
-Download the [latest release](https://github.com/paul-charp/WC-MCDU-Fenix-Patch/releases/latest), unzip it (you can delete the old folder) and run the new
-`WC-MCDU-Fenix-Patch.exe`.
+Download the [latest release](https://github.com/paul-charp/WC-MCDU-Fenix-Patch/releases/latest),
+unzip it (you can delete the old folder), run the new `WC-MCDU-Fenix-Patch.exe` and press 2. Your
+height offset is kept.
+
+### Height adjust
+
+With the patch installed, **press 3** in the menu to move the Fenix pages up or down on your own
+MCDU, without installing everything again. Start the Fenix first and show a page with text next
+to all the keys (INIT or PERF TAKE OFF).
+
+Type an offset in pixels and press **Enter**: the MCDU shows it a moment later. **0** is the
+default position, a **positive** number moves the text **up**, a **negative** one moves it
+**down** (from -26 to +20). Try values until each line sits next to its key, then press **Enter**
+on an empty line to keep it, or type **C** to cancel. A full install keeps your offset.
 
 ### Undo
 
-Every run first saves the current settings in a `backups\<date-time>\` folder next to the `.exe`.
-To put one back, see `--restore` in [Options](#options).
+Every install, height adjust and reset first saves the current settings in a
+`backups\<date-time>\` folder next to the `.exe`. To put one back, **press 4** (Reset), then
+**2** (A backup), and pick it: the list shows when each was made and what it holds
+(`FMGC-Pixel31n, Y 20`, `WinWing settings`…).
+
+To go back to WinWing's own settings, press **4**, then **1** (Factory settings): WinWing's font,
+layout, colours and Fenix page position, sent to the MCDU. The patch fonts are removed from
+SimAppPro2's font list.
 
 ### Options
 
-To pass options, open a command prompt in the unzipped folder: click the folder's address bar,
-type `cmd` and press Enter. Then type one of:
+The menu covers everything. The same actions also exist as command-line options: open a command
+prompt in the unzipped folder (click the folder's address bar, type `cmd` and press Enter), then
+type one of:
 
 ```
-WC-MCDU-Fenix-Patch.exe                                  install / re-apply everything
-WC-MCDU-Fenix-Patch.exe --check                          check without changing anything (✘ = needs fixing)
-WC-MCDU-Fenix-Patch.exe --y 18                           install with another vertical position
-WC-MCDU-Fenix-Patch.exe --restore backups\20261017-013516   put a backup back, then press Apply
-                                                         on the MCDU font page in SimAppPro2
+WC-MCDU-Fenix-Patch.exe                     the menu
+WC-MCDU-Fenix-Patch.exe --check             check without changing anything (✘ = needs fixing)
+WC-MCDU-Fenix-Patch.exe --install           install / re-apply everything, no menu
+WC-MCDU-Fenix-Patch.exe --install --offset 2   install with the text 2 px higher (negative: lower)
+WC-MCDU-Fenix-Patch.exe --restore backups\20261017-013516   put a backup back
+WC-MCDU-Fenix-Patch.exe --factory-reset     WinWing's settings
 ```
-
-When using `--y`, pass the same value to `--check`.
 
 ### Run from the source instead
 
@@ -142,7 +181,7 @@ With Python 3 on `PATH`, clone the repository and double-click **`installer.bat`
 `python setup_mcdu.py` with the same options. The first run installs the Python packages `rich`
 and `websocket-client` (`pip install --user`).
 
-### What the setup does
+### What a full install does
 
 0. Check that a WinWing MCDU is on USB (vendor `4098`, Captain / First Officer / Observer ids);
    if not, ask to plug it in and start as soon as it is detected.
@@ -157,6 +196,11 @@ and `websocket-client` (`pip install --user`).
 
 If anything fails, SimAppPro2 is still restarted normally and the previous files stay in `backups\`.
 
+Height adjust backs up, restarts SimAppPro2 with the debug port, and for each offset writes Y = 20 − offset
+to the scripts and sends the layout with SimAppPro2's own functions; SimLogic then re-sends the Fenix
+pages at the new position. The fonts are not sent again. Factory settings uses SimAppPro2's own reset
+functions for the font, layout and colours, puts the scripts back at Y 37 and removes the patch fonts.
+
 ## What it changes
 
 | Item | Stock SimAppPro2 | This patch |
@@ -164,8 +208,8 @@ If anything fails, SimAppPro2 is still restarted normally and the previous files
 | Font | WinWing `WWT_MCDU` | `FMGC-Pixel31n-Large` / `-Small`: pixel font custom-made for the WinCtrl MCDU to match the Fenix font at the pixel level, scale 1.0, no shift |
 | Cell size | 23 × 29 | 23 × 31 |
 | Editor grid | X 16, Y 17, preview yBase 20 | X 16, Y 20, preview yBase 0 (the editor's test grid matches what the sim shows) |
-| Fenix page position | X 52, Y 37 (hard-coded in the SimLogic Fenix scripts) | X 52, Y 20 |
-| Colours | SimAppPro2 defaults | Fenix web MCDU colours (written explicitly so a changed palette is put back) |
+| Fenix page position | X 52, Y 37 (hard-coded in the SimLogic Fenix scripts) | X 52, Y 20 (minus your height offset) |
+| Colours | WinWing defaults | Fenix web MCDU colours: the same values as WinWing's defaults, written explicitly so a changed palette is put back |
 
 Fenix web MCDU colours: amber `#FFA500`, white `#FFFFFF`, cyan `#00FFFF`, green `#00FF3D`,
 magenta `#FF63FF`, red `#FF0000`, yellow `#FFFF00`.
@@ -182,6 +226,7 @@ magenta `#FF63FF`, red `#FF0000`, yellow `#FFFF00`.
 | `SimAppPro2 did not create its MCDU settings` | Open the MCDU screen settings page once in SimAppPro2, close it, run again. |
 | `SimAppPro2 does not list FMGC-Pixel31n-…` | SimAppPro2 reads its font list at startup: restart it, run again. |
 | `Unexpected format in fnx_…` | A SimAppPro2 update changed the scripts; that file was left untouched. The pattern to update is `SIM_POINT` in `setup_mcdu.py`. |
+| *Height adjust* is dimmed in the menu | It needs the patch installed: press 2 (Full install) first. |
 | `SimAppPro2 is not answering` | Close SimAppPro2, then run again. |
 | `SimAppPro2 did not open its debug port` | Something else is using port 9333, or SimAppPro2 failed to start. Close SimAppPro2 and run again. |
 
