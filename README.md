@@ -35,6 +35,14 @@ Glyph sheet (each square is one MCDU pixel):
 
 ![Glyph sheet, before and after](docs/glyphs.png)
 
+### On the real MCDU
+
+Photos of the patched MCDU with the Fenix A320, INIT and PERF APPR pages:
+
+![INIT page on the real MCDU](docs/photo-init.jpg)
+
+![PERF APPR page on the real MCDU](docs/photo-appr.jpg)
+
 ## Install
 
 **[⬇ Download the latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest)**
@@ -203,7 +211,7 @@ build_exe.py             builds dist/WC-MCDU-Fenix-Patch/ and its .zip
 icon/                    the .exe icon and make_icon.py, which draws it
 .github/workflows/       CI: builds the .zip, publishes releases from version tags
 fonts/                   FMGC-Pixel31n-Large.ttf, FMGC-Pixel31n-Small.ttf
-docs/                    README screenshots and render_screens.py
+docs/                    README screenshots, photos and render_screens.py
 backups/                 created by each run (git-ignored)
 dist/                    the built .exe folder and .zip (git-ignored)
 ```
