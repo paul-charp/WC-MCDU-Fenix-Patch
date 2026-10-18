@@ -1,3 +1,6 @@
+# private working files: research, font tools, third-party fonts, old backups
+.local/
+
 # created by the scripts when they run
 backups/
 backup/

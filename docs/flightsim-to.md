@@ -56,7 +56,7 @@ If the setup stops with a message, the GitHub page has a table with the fix for 
 
 ## Source and issues
 
-https://github.com/paul-charp/wc-mcdu-fenix-patch
+https://github.com/paul-charp/WC-MCDU-Fenix-Patch
 
 Free and open source (MIT license). Not affiliated with WinWing or Fenix Simulations. Use at your own risk.
 

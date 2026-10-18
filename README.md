@@ -8,7 +8,7 @@ stock SimAppPro2 install into a screen that looks like the Fenix MCDU:
 - the Fenix colours,
 - the Fenix pages moved up so each data line sits on its line-select key.
 
-**[⬇ Download the latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest)** · **[Install instructions](#install)**
+**[⬇ Download the latest release](https://github.com/paul-charp/WC-MCDU-Fenix-Patch/releases/latest)** · **[Install instructions](#install)**
 
 > [!IMPORTANT]
 > **This needs SimAppPro2**, WinWing's newer app. It does **not** work with the original
@@ -45,7 +45,7 @@ Photos of the patched MCDU with the Fenix A320, INIT and PERF APPR pages:
 
 ## Install
 
-**[⬇ Download the latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest)**
+**[⬇ Download the latest release](https://github.com/paul-charp/WC-MCDU-Fenix-Patch/releases/latest)**
 
 You need:
 
@@ -58,7 +58,7 @@ You need:
 Nothing else: no Python or other software to install.
 
 1. **Download** `WinCtrl-MCDU-Fenix-A320-Patch-<version>.zip` from the
-   [latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest), under *Assets*.
+   [latest release](https://github.com/paul-charp/WC-MCDU-Fenix-Patch/releases/latest), under *Assets*.
 2. **Unzip it**: right-click the zip, **Extract All…**, then **Extract**. Put the folder anywhere,
    for example in `Documents`. Keep the `_internal` folder next to `WC-MCDU-Fenix-Patch.exe`: the
    program needs it.
@@ -113,7 +113,7 @@ puts the Fenix pages back at their old position (Y 37); the fonts and colours st
 
 ### Updating to a new version of this patch
 
-Download the [latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest), unzip it (you can delete the old folder) and run the new
+Download the [latest release](https://github.com/paul-charp/WC-MCDU-Fenix-Patch/releases/latest), unzip it (you can delete the old folder) and run the new
 `WC-MCDU-Fenix-Patch.exe`.
 
 ### Undo
