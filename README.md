@@ -57,7 +57,7 @@ You need:
 
 Nothing else: no Python or other software to install.
 
-1. **Download** `WC-MCDU-Fenix-Patch-<version>.zip` from the
+1. **Download** `WinCtrl-MCDU-Fenix-A320-Patch-<version>.zip` from the
    [latest release](https://github.com/paul-charp/wc-mcdu-fenix-patch/releases/latest), under *Assets*.
 2. **Unzip it**: right-click the zip, **Extract All…**, then **Extract**. Put the folder anywhere,
    for example in `Documents`. Keep the `_internal` folder next to `WC-MCDU-Fenix-Patch.exe`: the
@@ -211,7 +211,7 @@ build_exe.py             builds dist/WC-MCDU-Fenix-Patch/ and its .zip
 icon/                    the .exe icon and make_icon.py, which draws it
 .github/workflows/       CI: builds the .zip, publishes releases from version tags
 fonts/                   FMGC-Pixel31n-Large.ttf, FMGC-Pixel31n-Small.ttf
-docs/                    README screenshots, photos and render_screens.py
+docs/                    README screenshots, photos, render_screens.py, flightsim.to page text
 backups/                 created by each run (git-ignored)
 dist/                    the built .exe folder and .zip (git-ignored)
 ```
@@ -224,7 +224,7 @@ python build_exe.py 1.2.0      version 1.2.0
 ```
 
 Produces `dist\WC-MCDU-Fenix-Patch\` (`WC-MCDU-Fenix-Patch.exe` and its `_internal` folder,
-about 25 MB) and `dist\WC-MCDU-Fenix-Patch-<version>.zip` (about 12 MB): a PyInstaller one-folder build
+about 25 MB) and `dist\WinCtrl-MCDU-Fenix-A320-Patch-<version>.zip` (about 12 MB): a PyInstaller one-folder build
 holding Python, `rich`, `websocket-client` and the two fonts from `fonts\`, with Windows version
 info. It installs PyInstaller, `rich` and `websocket-client` with `pip --user` if they are
 missing. The `dist\` output is git-ignored; releases are built by CI (see below).
@@ -237,12 +237,14 @@ For the same reason the script calls Windows directly (ctypes) instead of runnin
 
 GitHub Actions (`.github/workflows/build.yml`) builds the zip on Windows for every push to `main`
 and every pull request; it is attached to the run as an artifact. Pushing a version tag also
-publishes a release with `WC-MCDU-Fenix-Patch-<version>.zip`, the tag message as its notes:
+publishes a release with `WinCtrl-MCDU-Fenix-A320-Patch-<version>.zip`, the tag message as its notes:
 
 ```
 git tag -a v1.2.0 -m "- what changed"
 git push origin v1.2.0
 ```
+
+Then upload the same zip to flightsim.to (page text and images in `docs/flightsim-to.md`).
 
 ## Updating the screenshots
 

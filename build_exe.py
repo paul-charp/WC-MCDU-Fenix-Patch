@@ -1,4 +1,5 @@
-"""Build dist/WC-MCDU-Fenix-Patch/ (the .exe with its _internal folder) and dist/WC-MCDU-Fenix-Patch.zip.
+"""Build dist/WC-MCDU-Fenix-Patch/ (the .exe with its _internal folder) and
+dist/WinCtrl-MCDU-Fenix-A320-Patch-<version>.zip.
 
   python build_exe.py            version 0.0.0 (local build)
   python build_exe.py 1.2.0      version stamped in the .exe and the .zip name (CI passes the tag)
@@ -16,6 +17,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 NAME = "WC-MCDU-Fenix-Patch"
+ZIP_NAME = "WinCtrl-MCDU-Fenix-A320-Patch"   # release zip, same name on GitHub and flightsim.to
 PACKAGES = {"PyInstaller": "pyinstaller", "rich": "rich", "websocket": "websocket-client"}
 
 VERSION_INFO = """VSVersionInfo(
@@ -68,7 +70,7 @@ def main():
     PyInstaller.__main__.run(args)
     shutil.rmtree(build, ignore_errors=True)
     folder = os.path.join(dist, NAME)
-    archive = shutil.make_archive(f"{folder}-{'.'.join(map(str, version))}", "zip", dist, NAME)
+    archive = shutil.make_archive(os.path.join(dist, f"{ZIP_NAME}-{'.'.join(map(str, version))}"), "zip", dist, NAME)
     size = sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(folder) for f in fs)
     print(f"\n{os.path.relpath(folder, HERE)}\\{NAME}.exe  ({size / 1e6:.1f} MB folder)")
     print(f"{os.path.relpath(archive, HERE)}  {os.path.getsize(archive) / 1e6:.1f} MB")
