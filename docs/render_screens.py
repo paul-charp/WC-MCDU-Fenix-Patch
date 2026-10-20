@@ -1,6 +1,6 @@
 """Render the README screenshots: the MCDU screen as the device draws it, before and after the patch.
-Writes perf-take-off.png, f-pln.png, glyphs.png, and cover.png (the patched PERF TAKE OFF alone,
-1920x1080, for flightsim.to).
+Writes perf-take-off.png, f-pln.png, glyphs.png, and render/mcdu-screen.png + mcdu-bezel.png (the
+patched PERF TAKE OFF as two layers, used by render_cover.py for the flightsim.to cover).
 
   python docs/render_screens.py
 
@@ -160,8 +160,9 @@ def calibrate(patched):
     return k, (x0 + x1) / 2 - k * (PATCHED_ORIGIN[0] + COLS * w / 2), ay
 
 
-def in_bezel(screen, cal):
-    """The 640 x 480 screen at SCALE behind the MCDU bezel, both placed by the calibration."""
+def bezel_layers(screen, cal):
+    """(screen, bezel): the 640 x 480 screen at SCALE on black, and the RGBA bezel over it, both
+    placed by the calibration."""
     k, ax, ay = cal
     f = SCALE / k                                       # bezel picture px -> output px
     bezel = Image.open(BEZEL).convert("RGBA")
@@ -169,7 +170,12 @@ def in_bezel(screen, cal):
     bezel = bezel.resize((round(bezel.width * f), round(bezel.height * f)), Image.LANCZOS)
     out = Image.new("RGBA", bezel.size, (0, 0, 0, 255))
     out.paste(screen.resize((SCREEN_W * SCALE, SCREEN_H * SCALE), Image.NEAREST), (round(ax * f), round(ay * f)))
-    return Image.alpha_composite(out, bezel).convert("RGB")
+    return out, bezel
+
+
+def in_bezel(screen, cal):
+    """The screen behind the MCDU bezel."""
+    return Image.alpha_composite(*bezel_layers(screen, cal)).convert("RGB")
 
 
 def draw_glyph_sheet(font, zoom=4):
@@ -215,15 +221,12 @@ def stacked(panels, path):
     print(f"{os.path.relpath(path, HERE)}  {out.size[0]}x{out.size[1]}  {os.path.getsize(path) / 1e6:.1f} MB")
 
 
-def cover(im, path, top=70, size=(1920, 1080)):
-    """flightsim.to cover: one panel on the dark background, 16:9. The bezel picture is cut at the
-    bottom, so that edge stays flush with the bottom of the image."""
-    h = im.height + top
-    w = round(h * size[0] / size[1])
-    out = Image.new("RGB", (max(w, im.width), h), (13, 17, 23))
-    out.paste(im, ((out.width - im.width) // 2, top))
-    out.resize(size, Image.LANCZOS).save(path, optimize=True)
-    print(f"{os.path.relpath(path, HERE)}  {size[0]}x{size[1]}  {os.path.getsize(path) / 1e6:.1f} MB")
+def cover_layers(screen, cal):
+    """Screen and bezel layers of the patched panel, for the flightsim.to cover (docs/render_cover.py)."""
+    for name, im in zip(("mcdu-screen", "mcdu-bezel"), bezel_layers(screen, cal)):
+        path = os.path.join(HERE, "render", f"{name}.png")
+        im.save(path, optimize=True)
+        print(f"{os.path.relpath(path, HERE)}  {im.width}x{im.height}")
 
 
 def main():
@@ -235,11 +238,12 @@ def main():
              "FMGC Pixel31n: pixel font custom-made for the WinCtrl MCDU to match the Fenix font at the pixel level; "
              "23×31 cells, Fenix pages at X 52 Y 20")
     for name, page in (("perf-take-off", PERF_TAKE_OFF), ("f-pln", F_PLN)):
-        patched_panel = in_bezel(draw_screen(page, patched, PATCHED_ORIGIN), cal)
+        patched_screen = draw_screen(page, patched, PATCHED_ORIGIN)
+        patched_panel = in_bezel(patched_screen, cal)
         stacked([(*before, in_bezel(draw_screen(page, stock, STOCK_ORIGIN), cal)),
                  (*after, patched_panel)], os.path.join(HERE, f"{name}.png"))
         if name == "perf-take-off":
-            cover(patched_panel, os.path.join(HERE, "cover.png"))
+            cover_layers(patched_screen, cal)
     stacked([("Before", "WinWing stock font: large green, small cyan", draw_glyph_sheet(stock, 6)),
              ("After", "FMGC Pixel31n, custom-made to match the Fenix font: large green, small cyan", draw_glyph_sheet(patched, 6))],
             os.path.join(HERE, "glyphs.png"))

@@ -64,7 +64,7 @@ Free and open source (MIT license). Not affiliated with WinWing or Fenix Simulat
 
 ## Images (upload order)
 
-1. `docs/cover.png` (cover: the patched PERF TAKE OFF alone, 1920x1080)
+1. `docs/cover.png` (cover, 1920x1080: `python docs/render_screens.py`, then `python docs/render_cover.py`)
 2. `docs/perf-take-off.png`
 3. `docs/f-pln.png`
 4. `docs/glyphs.png`

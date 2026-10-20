@@ -16,3 +16,6 @@ Monitor_crashes/
 # build_exe.py output (attach the .exe to a release instead of committing it)
 build/
 dist/
+
+# render_screens.py / render_cover.py intermediates (the bezel layer is SimAppPro2's picture)
+docs/render/*.png

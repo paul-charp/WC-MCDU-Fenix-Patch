@@ -1,0 +1,39 @@
+<!doctype html>
+<!-- flightsim.to cover (1920x1080), same layout as the other paulcharp mods. Rendered by docs/render_cover.py
+     from render/mcdu-panel.png (the patched PERF TAKE OFF with the LCD look, written by the same script). -->
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0e1218; font-family: "Roboto", sans-serif; }
+  .sky {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 70% at 75% 38%, rgba(255, 196, 140, 0.55) 0%, rgba(255, 196, 140, 0) 60%),
+      linear-gradient(180deg, #34507a 0%, #6f8fb5 36%, #c9b9a6 56%, #8f9278 58%, #5f6650 72%, #3b4234 100%);
+  }
+  .sky::after { /* distant ridge */
+    content: ""; position: absolute; left: -5%; right: -5%; top: 52%; height: 10%;
+    background: linear-gradient(180deg, rgba(70, 82, 96, 0.9), rgba(70, 82, 96, 0));
+    clip-path: polygon(0 60%, 8% 35%, 17% 55%, 28% 20%, 38% 50%, 47% 30%, 58% 58%, 69% 25%, 80% 48%, 90% 30%, 100% 50%, 100% 100%, 0 100%);
+  }
+  .shade {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(8, 11, 16, 0.82) 0%, rgba(8, 11, 16, 0.55) 42%, rgba(8, 11, 16, 0.05) 70%);
+  }
+  .title { position: absolute; left: 120px; top: 50%; transform: translateY(-50%); color: #f2f5f8; max-width: 690px; }
+  .eyebrow { font: 500 26px/1 "Roboto", sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: #ffb547; }
+  h1 { white-space: nowrap; font: 700 112px/1 "Roboto", sans-serif; margin: 26px 0 30px; letter-spacing: -0.02em; }
+  .sub { font: 400 34px/1.35 "Roboto", sans-serif; color: rgba(242, 245, 248, 0.82); }
+  .for { margin-top: 44px; font: 500 22px/1 "Roboto", sans-serif; color: rgba(242, 245, 248, 0.6); letter-spacing: 0.04em; }
+  /* the bezel picture is cut at the bottom, so it stays flush with the bottom edge */
+  .mcdu { position: absolute; right: 80px; bottom: 0; width: 920px; filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.6)); }
+</style>
+<div class="sky"></div>
+<div class="shade"></div>
+<div class="title">
+  <div class="eyebrow">For the Fenix A320</div>
+  <h1>WinCtrl MCDU<br>Fenix Patch</h1>
+  <div class="sub">A Fenix-style screen for the WinWing MCDU: pixel font, Fenix colours, lines on their keys.</div>
+  <div class="for">Microsoft Flight Simulator · SimAppPro2</div>
+</div>
+<img class="mcdu" src="mcdu-panel.png">
