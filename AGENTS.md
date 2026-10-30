@@ -51,6 +51,8 @@ SimAppPro2 only (never SimAppPro v1, never Fenix or MSFS files). Windows only. U
 - The `CDU_*` calls fail (status 1) until `CDU_getConfig({isFileSync: true})` and
   `CDU_getFontArray()` have loaded the settings in that session. `CDU_resetFont` and a restored
   font set also need `CDU_getFontConfigWithPixel` before `CDU_applyFont`, or an empty font is sent.
+- The font set (`customer/default/EditSpace/<set>`) does not exist until a font reset or the first
+  save in the editor: without it all font calls return status 1. `CDU_resetFont` creates it.
 - For a few seconds after start the back end answers "The peer 17 is not online": wait for
   `CDU_getPcFontArray` to succeed (`App.wait_ready`).
 - SimAppPro2 reads its font list (`GameExtendDisplay/Windows/Fonts`) at startup only.

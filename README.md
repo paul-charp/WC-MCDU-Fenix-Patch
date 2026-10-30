@@ -225,6 +225,7 @@ magenta `#FF63FF`, red `#FF0000`, yellow `#FFFF00`.
 | `SimAppPro2 MCDU profile not found` | Start SimAppPro2 once with the MCDU plugged in, then run again. |
 | `SimAppPro2 did not create its MCDU settings` | Open the MCDU screen settings page once in SimAppPro2, close it, run again. |
 | `SimAppPro2 does not list FMGC-Pixel31n-…` | SimAppPro2 reads its font list at startup: restart it, run again. |
+| `SimAppPro2 refused to select, convert, save or send the fonts (codes [1, 1, 1, 1, 1])` | SimAppPro2 has no MCDU font set yet. Update to the latest version, or choose **Reset › Factory settings**, then **Full install**. |
 | `Unexpected format in fnx_…` | A SimAppPro2 update changed the scripts; that file was left untouched. The pattern to update is `SIM_POINT` in `setup_mcdu.py`. |
 | *Height adjust* is dimmed in the menu | It needs the patch installed: press 2 (Full install) first. |
 | `SimAppPro2 is not answering` | Close SimAppPro2, then run again. |

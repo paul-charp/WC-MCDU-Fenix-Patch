@@ -469,13 +469,16 @@ def patch_simlogic(y):
 
 def write_settings(gx, y, tick):
     cfg_path = os.path.join(mcdu_settings(gx), "default_config.json")
-    if not os.path.exists(cfg_path):                    # fresh install: let SimAppPro2 create its settings
+    # Fresh install: let SimAppPro2 create its settings. It only creates the font set on a font reset
+    # (or the first save in its editor); until then every font call fails with status 1.
+    if not (os.path.exists(cfg_path) and os.path.exists(selected_font_set(gx)[1])):
         start_app(debug=True, tick=tick)
         app = App()
         app.wait_ready()
-        app.call("await api.CDU_getConfig({isFileSync: true}); await api.CDU_getFontArray(); return 1;")
+        app.call("await api.CDU_getConfig({isFileSync: true}); await api.CDU_getFontArray();"
+                 " await api.CDU_resetFont(); return 1;")
         stop_app()
-        if not os.path.exists(cfg_path):
+        if not (os.path.exists(cfg_path) and os.path.exists(selected_font_set(gx)[1])):
             raise SetupError("SimAppPro2 did not create its MCDU settings: open the MCDU screen settings page "
                              "once in SimAppPro2, close it, then run this again.")
     cfg = load_json(cfg_path)
@@ -486,10 +489,9 @@ def write_settings(gx, y, tick):
             c["currentColor"] = FENIX_COLOURS[c["colorName"]]
     save_json(cfg_path, cfg)
     _, set_cfg, _ = selected_font_set(gx)
-    if os.path.exists(set_cfg):                         # the font set keeps its own copy of the grid
-        d = load_json(set_cfg)
-        d["pixelConfig"].update(LAYOUT, scY=y)
-        save_json(set_cfg, d)
+    d = load_json(set_cfg)                              # the font set keeps its own copy of the grid
+    d["pixelConfig"].update(LAYOUT, scY=y)
+    save_json(set_cfg, d)
     return f"X {LAYOUT['scX']}  Y {y}  {LAYOUT['matrixW']}x{LAYOUT['matrixH']}, Fenix colours"
 
 
