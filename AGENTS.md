@@ -36,7 +36,8 @@ SimAppPro2 only (never SimAppPro v1, never Fenix or MSFS files). Windows only. U
 - Fonts are MIT like the rest (name-table copyright set in the `.txt` headers, `fsType: 0`).
 - No PowerShell or other child shells in `setup_mcdu.py`: use ctypes (cfgmgr32, Toolhelp,
   WM_CLOSE). A PowerShell-calling one-file build was flagged by Defender as a trojan.
-- Changelogs and tag messages list what changed, not why.
+- Changelogs and tag messages list what changed, not why. Add each release to `CHANGELOG.md`, same
+  text as the tag message.
 
 ## SimAppPro2 gotchas
 
