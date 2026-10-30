@@ -29,6 +29,9 @@ jobs:
       - name: Check fonts match fonts/src
         run: python fonts/make_ttf.py --check
 
+      - name: Check installer backends
+        run: python -m unittest discover -s tests -v
+
       - name: Build
         shell: bash
         run: |

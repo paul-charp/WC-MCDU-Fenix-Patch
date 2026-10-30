@@ -11,9 +11,9 @@ stock SimAppPro2 install into a screen that looks like the Fenix MCDU:
 **[⬇ Download the latest release](https://github.com/paul-charp/WC-MCDU-Fenix-Patch/releases/latest)** · **[Install instructions](#install)**
 
 > [!IMPORTANT]
-> **This needs SimAppPro2**, WinWing's newer app. It does **not** work with the original
-> **SimAppPro** (version 1), which most MCDU owners still have: install SimAppPro2 first and run
-> the MCDU with it. This patch only configures SimAppPro2.
+> **SimAppPro2 is the default.** The original **SimAppPro (version 1)** now has an
+> [experimental backend](#simapppro-v1-experimental), selected explicitly with `--simapppro 1`.
+> V1 still needs validation on the real MCDU with Fenix running.
 
 > **About the fonts.** `FMGC Pixel31n` is not the Fenix font: it was rebuilt pixel by pixel on
 > the MCDU's 23 × 31 grid to match the look of the Fenix FMGC font (FlightBus, Jesper
@@ -44,6 +44,8 @@ Photos of the patched MCDU with the Fenix A320, INIT and PERF APPR pages:
 ![PERF APPR page on the real MCDU](docs/photo-appr.jpg)
 
 ## Install
+
+The instructions below use SimAppPro2. If the app selector appears, select **2**.
 
 **[⬇ Download the latest release](https://github.com/paul-charp/WC-MCDU-Fenix-Patch/releases/latest)**
 
@@ -220,7 +222,7 @@ magenta `#FF63FF`, red `#FF0000`, yellow `#FFFF00`.
 |---|---|
 | *Windows protected your PC* | The program is not code-signed: click **More info**, then **Run anyway**. |
 | The antivirus blocks or removes the `.exe` | A false positive that hits many Python-built programs. Allow it in the antivirus, or [run from the source](#run-from-the-source-instead). |
-| `SimAppPro2 not found` | Only the original SimAppPro (version 1) is installed, or nothing is. Install **SimAppPro2** from WinWing's website, open it once with the MCDU plugged in, then run again. |
+| `SimAppPro2 not found` | To use the original app, run with `--simapppro 1`. Otherwise install **SimAppPro2**, open it once with the MCDU plugged in, then run again. |
 | `Connect the MCDU` / `No WinWing MCDU found on USB` | Plug the MCDU in (any USB port). The setup continues by itself once Windows sees it. |
 | `SimAppPro2 MCDU profile not found` | Start SimAppPro2 once with the MCDU plugged in, then run again. |
 | `SimAppPro2 did not create its MCDU settings` | Open the MCDU screen settings page once in SimAppPro2, close it, run again. |
@@ -333,6 +335,47 @@ startup and caches the old name. Rename both `fonts/src/*.txt` files and their `
 build, delete the old `.ttf` files (`fonts/` must hold a single `*-Large.ttf` / `*-Small.ttf`
 pair), then rebuild the `.exe`. If the cell size changes, `LAYOUT` in `setup_mcdu.py` must be
 updated too.
+
+## SimAppPro v1 (experimental)
+
+**Note**: Running as administrator is needed for v1 installation
+
+The original SimAppPro has separate settings and APIs. Open it once with the MCDU connected,
+then open its MCDU screen settings. Close SimAppPro2 before running a v1 install.
+For install, height adjust and reset, **right-click the patch executable, choose Run as
+administrator, then select Original SimAppPro (v1)**. The app selector appears when v1 is
+installed. Command-line installs need an administrator terminal; `--check` does not.
+
+From the unzipped patch folder, use:
+
+```
+WC-MCDU-Fenix-Patch.exe --simapppro 1 --check
+WC-MCDU-Fenix-Patch.exe --simapppro 1
+WC-MCDU-Fenix-Patch.exe --simapppro 1 --install
+WC-MCDU-Fenix-Patch.exe --simapppro 1 --install --offset 2
+WC-MCDU-Fenix-Patch.exe --simapppro 1 --factory-reset
+WC-MCDU-Fenix-Patch.exe --simapppro 1 --restore backups\simapppro-v1\<backup-folder>
+```
+
+The second command opens the v1 menu. From source, replace `WC-MCDU-Fenix-Patch.exe` with
+`python setup_mcdu.py`. For a custom installation folder, add
+`--app-path "D:\SimAppPro\SimAppPro.exe"`.
+
+V1 installs a separate patch font set in `%APPDATA%\SimAppPro\GameExtendDisplay\MCDU`,
+sets the font, grid and colours, and updates its MCDU page-position settings. It uses
+SimAppPro's own font conversion and upload functions. Each install, reset or restore first
+saves a v1 backup; restores preserve unrelated app and other-device settings. V1 and v2
+backups are separate. The setup temporarily enables v1's debug interface and restores the
+previous debug setting before starting it normally again.
+
+**Height adjust on v1 resends the fonts**, so allow the upload to finish for each offset.
+After installation, check the Fenix INIT or PERF page on the physical MCDU. A successful
+settings check verifies the files and font cache; it does not confirm USB delivery.
+
+The fonts and all 26 Fenix workflow origins passed conversion/replay checks against
+SimAppPro **1.17.11** and SimLogic **1.2.60**. Live IPC reads and normal-startup cleanup have
+been verified. Physical USB output and page refresh with Fenix still need validation.
+[Implementation and investigation notes](docs/simapppro-v1-port.md).
 
 ## License
 

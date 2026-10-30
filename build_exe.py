@@ -25,7 +25,7 @@ VERSION_INFO = """VSVersionInfo(
                     subtype=0x0, date=(0, 0)),
   kids=[StringFileInfo([StringTable('040904B0', [
           StringStruct('CompanyName', 'Paul Charpentier'),
-          StringStruct('FileDescription', 'WinWing MCDU setup for the Fenix A320 (SimAppPro2)'),
+          StringStruct('FileDescription', 'WinWing MCDU setup for the Fenix A320 (SimAppPro)'),
           StringStruct('FileVersion', '{v}'),
           StringStruct('InternalName', '{name}'),
           StringStruct('LegalCopyright', 'Paul Charpentier'),

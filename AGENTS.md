@@ -2,17 +2,22 @@
 
 One-click setup that makes the WinWing (WinCtrl) MCDU show Fenix A320 pages like the Fenix MCDU:
 pixel fonts, Fenix colours, pages moved so data lines sit on the line-select keys. It configures
-SimAppPro2 only (never SimAppPro v1, never Fenix or MSFS files). Windows only. User docs:
+SimAppPro2 by default, with an explicit experimental SimAppPro v1 backend (never Fenix or MSFS files). Windows only. User docs:
 [README.md](README.md).
 
 ## Layout
 
-- `setup_mcdu.py`: the whole setup. No options (and a console): a menu with Check only, Full
+- `setup_mcdu.py`: shared setup and v2 backend. No options (and a console): app selection when
+  v1 is installed, then a menu with Check only, Full
   install, Height adjust (typed offset, live, no font resend) and Reset (factory settings or a
   backup). Options: `--check`, `--install`, `--offset N`, `--restore`, `--factory-reset`; no options
   without a console = install. Height offset = 20 − Y, saved in the editor layout `scY`, which the
   next install reads back. Python 3, `rich` + `websocket-client`; runs as the PyInstaller `.exe`
   too (`FROZEN` / `BUNDLED` paths).
+- `simapppro_v1.py`: experimental original SimAppPro backend, selected with `--simapppro 1`
+  (`--app-path EXE` for a custom install). Shared UI, USB checks and CDP transport stay in
+  `setup_mcdu.py`. V1 height adjust resends fonts. Its backups are under
+  `backups/simapppro-v1`; never restore them to v2 or vice versa.
 - `fonts/*.ttf`: the shipped pair (exactly one `*-Large.ttf` and one `*-Small.ttf`).
   `fonts/src/*.txt` is their source (23x31 `#`/`.` bitmaps); `fonts/make_ttf.py` builds them,
   `--check` verifies them (CI runs it). Needs fontTools.
@@ -60,6 +65,11 @@ SimAppPro2 only (never SimAppPro v1, never Fenix or MSFS files). Windows only. U
 
 ## Testing
 
+- `python -m unittest discover -s tests -v`: isolated v1 profile, backup, cleanup and IPC checks.
+- `python setup_mcdu.py --simapppro 1 --check`: read-only v1 state check. V1 implementation
+  is experimental until page refresh and real MCDU output have been verified. Live IPC reads,
+  normal startup cleanup and copied-profile conversion have passed. V1 mutations need an
+  administrator terminal or Run as administrator.
 - `python setup_mcdu.py --check`: read-only state check. Never run `python setup_mcdu.py` without
   options from a non-interactive shell: with no console it starts a full install.
 - Full install: `python setup_mcdu.py --install` with the MCDU plugged in (about a minute; closes and
