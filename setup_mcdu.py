@@ -1,4 +1,4 @@
-"""Install the WinWing MCDU setup for the Fenix A320 on SimAppPro2.
+"""Install the WinWing MCDU setup for the Fenix A320 on SimAppPro2 or SimAppPro v1.
 
   python setup_mcdu.py               menu: check, install, height adjust, reset
   python setup_mcdu.py --check       check the current state, change nothing
@@ -6,6 +6,7 @@
   python setup_mcdu.py --install --offset 2   install with the text 2 px higher (negative: lower)
   python setup_mcdu.py --restore backups\\20261015-213000   put a backup back
   python setup_mcdu.py --factory-reset    WinWing's font, layout and colours, Fenix pages at Y 37
+  python setup_mcdu.py --simapppro 1 --check   experimental original SimAppPro backend
 
 Also built as a standalone WC-MCDU-Fenix-Patch.exe (build_exe.py), with the same arguments.
 
@@ -308,11 +309,12 @@ def app_pids(exe_name=None):
     return pids
 
 
-def stop_app():
+def stop_app(exe=None):
     """Ask SimAppPro2's windows to close, then end whatever is still running after 3 s."""
     import ctypes
     from ctypes import wintypes
-    pids = app_pids()
+    name = os.path.basename(exe or EXE)
+    pids = app_pids(name)
     if not pids:
         return
     user32, k32 = ctypes.windll.user32, ctypes.windll.kernel32
@@ -328,16 +330,70 @@ def stop_app():
     user32.EnumWindows(close_window, 0)
     time.sleep(3)
     k32.OpenProcess.restype = wintypes.HANDLE
-    for pid in app_pids():
+    for pid in app_pids(name):
         h = k32.OpenProcess(0x1, False, pid)            # PROCESS_TERMINATE
         if h:
             k32.TerminateProcess(wintypes.HANDLE(h), 0)
             k32.CloseHandle(wintypes.HANDLE(h))
-    time.sleep(2)
+    time.sleep(2)                                      # allow the app/device handles to finish closing
+    deadline = time.monotonic() + 6
+    while app_pids(name):
+        if time.monotonic() >= deadline:
+            raise SetupError(f"Could not close {name}. Close it, then run this again.")
+        time.sleep(0.2)
 
 
-def start_app(debug=False, tick=None):
-    args = [EXE] + ([f"--remote-debugging-port={DEBUG_PORT}", "--remote-allow-origins=*"] if debug else [])
+def debug_pages():
+    with urllib.request.urlopen(f"http://127.0.0.1:{DEBUG_PORT}/json/list", timeout=2) as response:
+        return json.load(response)
+
+
+def is_admin():
+    import ctypes
+    return bool(ctypes.windll.shell32.IsUserAnAdmin())
+
+
+def launch_app(args, env=None):
+    """Launch directly, using the Windows elevation broker when the app requires it."""
+    try:
+        subprocess.Popen(args, cwd=os.path.dirname(args[0]), env=env, stdin=subprocess.DEVNULL,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, close_fds=True,
+                         creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+    except OSError as error:
+        if getattr(error, "winerror", None) != 740:
+            raise
+        import ctypes
+        from ctypes import wintypes
+
+        class ExecuteInfo(ctypes.Structure):            # SHELLEXECUTEINFOW
+            _fields_ = [("cbSize", wintypes.DWORD), ("fMask", wintypes.ULONG), ("hwnd", wintypes.HWND),
+                        ("lpVerb", wintypes.LPCWSTR), ("lpFile", wintypes.LPCWSTR),
+                        ("lpParameters", wintypes.LPCWSTR), ("lpDirectory", wintypes.LPCWSTR),
+                        ("nShow", ctypes.c_int), ("hInstApp", wintypes.HINSTANCE),
+                        ("lpIDList", ctypes.c_void_p), ("lpClass", wintypes.LPCWSTR),
+                        ("hkeyClass", wintypes.HKEY), ("dwHotKey", wintypes.DWORD),
+                        ("hIcon", wintypes.HANDLE), ("hProcess", wintypes.HANDLE)]
+
+        info = ExecuteInfo()
+        info.cbSize = ctypes.sizeof(info)
+        info.fMask = 0x40 | 0x100                       # NOCLOSEPROCESS | NOASYNC
+        info.lpVerb, info.lpFile = "runas", args[0]
+        info.lpParameters = subprocess.list2cmdline(args[1:])
+        info.lpDirectory, info.nShow = os.path.dirname(args[0]), 1
+        shell = ctypes.WinDLL("shell32", use_last_error=True)
+        shell.ShellExecuteExW.argtypes = [ctypes.POINTER(ExecuteInfo)]
+        shell.ShellExecuteExW.restype = wintypes.BOOL
+        if not shell.ShellExecuteExW(ctypes.byref(info)):
+            raise SetupError(f"Windows did not allow {os.path.basename(args[0])} to start "
+                             f"as administrator (error {ctypes.get_last_error()}).")
+        if info.hProcess:
+            ctypes.windll.kernel32.CloseHandle(wintypes.HANDLE(info.hProcess))
+
+
+def start_app(debug=False, tick=None, exe=None, page_match=None):
+    exe = exe or EXE
+    name = os.path.splitext(os.path.basename(exe))[0]
+    args = [exe] + ([f"--remote-debugging-port={DEBUG_PORT}", "--remote-allow-origins=*"] if debug else [])
     env = None
     if FROZEN:
         # The .exe's launcher points the DLL search at its _internal folder and child processes
@@ -347,36 +403,38 @@ def start_app(debug=False, tick=None):
         env = {k: v for k, v in os.environ.items() if not k.startswith(("_PYI", "_MEI"))}
     # Own folder as working directory (it writes logs there) and no console: its Chromium
     # logs would otherwise end up in ours.
-    subprocess.Popen(args, cwd=os.path.dirname(EXE), env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                     stderr=subprocess.DEVNULL, close_fds=True,
-                     creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+    launch_app(args, env)
     if not debug:
         return
     t0 = time.monotonic()
     while time.monotonic() - t0 < 60:
         if tick:
-            tick(min(0.6, (time.monotonic() - t0) / 15), "starting SimAppPro2")
+            tick(min(0.6, (time.monotonic() - t0) / 15), f"starting {name}")
         try:
-            pages = json.load(urllib.request.urlopen(f"http://127.0.0.1:{DEBUG_PORT}/json/list", timeout=2))
-            if any(p.get("type") == "page" for p in pages):
+            pages = debug_pages()
+            if any(p.get("type") == "page" and (page_match is None or page_match(p)) for p in pages):
                 if tick:
-                    wait(6, tick, 0.6, 1.0, "waiting for SimAppPro2 to load")
+                    wait(6, tick, 0.6, 1.0, f"waiting for {name} to load")
                 else:
                     time.sleep(6)
                 return
         except OSError:
             pass
         time.sleep(0.5)
-    raise SetupError("SimAppPro2 did not open its debug port.")
+    raise SetupError(f"{name} did not open its debug port.")
 
 
 class App:
     """Calls SimAppPro2's own MCDU functions (WWTEx_keyPress.CDU_*) through its UI."""
 
-    def __init__(self):
+    def __init__(self, api=None, name="SimAppPro2", page_match=None):
         import websocket
-        pages = json.load(urllib.request.urlopen(f"http://127.0.0.1:{DEBUG_PORT}/json/list"))
-        page = next(p for p in pages if p.get("type") == "page")
+        self.name = name
+        pages = debug_pages()
+        page = next((p for p in pages if p.get("type") == "page" and
+                     (page_match is None or page_match(p))), None)
+        if page is None:
+            raise SetupError(f"{name}'s setup page was not found on the debug port.")
         self.ws = websocket.create_connection(page["webSocketDebuggerUrl"], timeout=120)
         self.n = 0
         mains = [os.path.basename(p) for p in glob.glob(os.path.join(UI_ASSETS, "main-*.js"))]
@@ -389,6 +447,11 @@ class App:
                     " if (typeof m[k] === 'function' && (k === 'c' || m[k].length === 0)) {"
                     " const o = m[k](); if (o && o.WWTEx_keyPress) return {k: o.WWTEx_keyPress}; } } catch (e) {} } }"
                     " throw new Error('SimAppPro2 API not found'); })()") % json.dumps(mains)
+        if api is not None:
+            self.api = api
+
+    def close(self):
+        self.ws.close()
 
     def call(self, body):
         self.n += 1
@@ -401,10 +464,10 @@ class App:
             if m.get("id") != self.n:
                 continue
             if "error" in m:
-                raise SetupError(f"SimAppPro2: {m['error'].get('message')}")
+                raise SetupError(f"{self.name}: {m['error'].get('message')}")
             r = m["result"]
             if "exceptionDetails" in r:
-                raise SetupError(f"SimAppPro2: {r['exceptionDetails'].get('exception', {}).get('description', 'error')}")
+                raise SetupError(f"{self.name}: {r['exceptionDetails'].get('exception', {}).get('description', 'error')}")
             return r.get("result", {}).get("value")
 
     def wait_ready(self, tick=None, timeout=60):
@@ -419,9 +482,9 @@ class App:
                 return r["fonts"]
             elapsed = time.monotonic() - t0
             if elapsed > timeout:
-                raise SetupError(f"SimAppPro2 is not answering ({r.get('error')}). Close it, then run this again.")
+                raise SetupError(f"{self.name} is not answering ({r.get('error')}). Close it, then run this again.")
             if tick:
-                tick(elapsed / timeout, "waiting for SimAppPro2 to be ready")
+                tick(elapsed / timeout, f"waiting for {self.name} to be ready")
             time.sleep(1)
 
 
@@ -997,8 +1060,11 @@ def menu(ui, gx):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="WinWing MCDU setup for the Fenix A320 (SimAppPro2). "
+    ap = argparse.ArgumentParser(description="WinWing MCDU setup for the Fenix A320 (SimAppPro v1 or v2). "
                                              "Without options: a menu.")
+    ap.add_argument("--simapppro", choices=("1", "2"),
+                    help="app version to configure (default: 2; interactive menu can select v1)")
+    ap.add_argument("--app-path", metavar="EXE", help="SimAppPro v1 executable, if installed in a custom folder")
     ap.add_argument("--check", action="store_true", help="check the current state without changing anything")
     ap.add_argument("--install", action="store_true", help="install / re-apply everything, no menu")
     ap.add_argument("--offset", type=int, help="height offset in px: 0 = default, positive = text up, negative = "
@@ -1008,6 +1074,11 @@ def main():
     ap.add_argument("--factory-reset", action="store_true",
                     help="WinWing's font, layout, colours and Fenix page position")
     a = ap.parse_args()
+    choose_app = a.simapppro is None and sys.stdin.isatty() and not any(
+        (a.check, a.install, a.restore, a.factory_reset, a.offset is not None, a.y is not None))
+    a.simapppro = a.simapppro or "2"
+    if a.app_path and a.simapppro != "1":
+        ap.error("--app-path is only used with --simapppro 1")
     if a.offset is not None:
         a.y = y_of(a.offset)
     if a.y is not None and not Y_RANGE[0] <= a.y <= Y_RANGE[1]:
@@ -1023,12 +1094,26 @@ def main():
         return 2
     ui = UI()
     try:
+        if choose_app:
+            from simapppro_v1 import discover_exe
+            if discover_exe():
+                ui.header("Choose SimAppPro", [("1", "Original SimAppPro (v1, experimental)"),
+                                               ("2", "SimAppPro2 (default)"), ("Q", "Quit")])
+                key = read_key()
+                while key not in ("1", "2", "enter", "q", "esc", "ctrl-c"):
+                    key = read_key()
+                if key in ("q", "esc", "ctrl-c"):
+                    return -1
+                a.simapppro = "1" if key == "1" else "2"
+        if a.simapppro == "1":
+            from simapppro_v1 import Backend
+            return Backend(sys.modules[__name__], exe=a.app_path).run(ui, a)
         if not os.path.exists(EXE):
-            v1 = (" The original SimAppPro (version 1) is running: it is not supported."
+            v1 = (" To use the original SimAppPro, run with --simapppro 1."
                   if app_pids("SimAppPro.exe") else "")
             raise SetupError(f"SimAppPro2 not found ({EXE}).{v1}\n"
-                             "This setup needs SimAppPro2, not the original SimAppPro: install SimAppPro2 "
-                             "from WinWing's website, open it once with the MCDU plugged in, then run this again.")
+                             "Install SimAppPro2 and open it once with the MCDU plugged in, "
+                             "or select the original app explicitly with --simapppro 1.")
         gx = gamedisplay_dir()
         if a.check:
             return 0 if cmd_check(ui, gx, a.y) else 1
@@ -1046,7 +1131,8 @@ def main():
         ui.error("Setup stopped", str(e))
         return 2
     except KeyboardInterrupt:
-        ui.error("Interrupted", "Stopped by the user. If the install had started, SimAppPro2 was restarted\n"
+        target = "SimAppPro v1" if a.simapppro == "1" else "SimAppPro2"
+        ui.error("Interrupted", f"Stopped by the user. If the install had started, {target} was restarted\n"
                                 "normally and the previous files are in backups\\.")
         return 2
     except Exception as e:                              # unexpected: short message instead of a traceback
