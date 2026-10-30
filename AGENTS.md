@@ -35,6 +35,11 @@ SimAppPro2 by default, with an explicit experimental SimAppPro v1 backend (never
 - Never commit third-party files: Fenix, WinWing/SimAppPro2, SimLogic scripts, McDoo or other
   fonts. Everything from `.local/` stays local.
 - README and other tracked files don't mention `.local/` content or the original font pipeline.
+- Before committing, review the staged diff and commit message for unnecessary client- or
+  machine-specific information: usernames, hostnames, personal paths, device/account IDs,
+  internal session/evidence identifiers, local package hashes and incidental inventory details.
+  Omit these or use generic placeholders; retain only details needed to explain compatibility
+  or reproduce behavior. Never include credentials or private logs/profile dumps.
 - Edit glyphs in `fonts/src/*.txt`, never by rasterising other fonts. Any visible font change
   needs a new font name (`Pixel31n` → `Pixel31o`: rename both `.txt` files and their `family:`
   line, rebuild, delete the old `.ttf` files): SimAppPro2 caches fonts by name.
