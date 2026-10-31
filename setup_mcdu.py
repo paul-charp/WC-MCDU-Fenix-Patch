@@ -28,11 +28,10 @@ FROZEN = getattr(sys, "frozen", False)                 # running as the PyInstal
 # HERE: where backups\ goes (next to the .exe or the script); BUNDLED: where fonts\ is read from
 HERE = os.path.dirname(sys.executable if FROZEN else os.path.abspath(__file__))
 BUNDLED = getattr(sys, "_MEIPASS", HERE)
-EXE = os.path.join(os.environ["LOCALAPPDATA"], "SimAppPro2", "SimAppPro2.exe")
-ROOT = os.path.join(os.environ["APPDATA"], "SimAppPro2")
-EXT = os.path.join(ROOT, "extension", "extensions")
-WORKFLOWS = os.path.join(EXT, "WWTEx_simLogic", "dist", "src_func", "workflow")
-UI_ASSETS = os.path.join(EXT, "WWTEx_ui", "assets")
+EXE_NAME = "SimAppPro2.exe"
+DEFAULT_APP_DIR = os.path.join(os.environ["LOCALAPPDATA"], "SimAppPro2")
+DEFAULT_DATA_DIR = os.path.join(os.environ["APPDATA"], "SimAppPro2")
+PATHS_FILE = os.path.join(HERE, "simapppro2_paths.json")   # folders the user typed in
 DEBUG_PORT = 9333
 
 DEFAULT_Y = 20
@@ -186,8 +185,89 @@ def wait(seconds, tick, start, end, note):
 
 
 # ------------------------------------------------------------------ locations
+def set_locations(app_dir, data_dir):
+    global EXE, ROOT, EXT, WORKFLOWS, UI_ASSETS
+    EXE = os.path.join(app_dir, EXE_NAME)
+    ROOT = data_dir
+    EXT = os.path.join(ROOT, "extension", "extensions")
+    WORKFLOWS = os.path.join(EXT, "WWTEx_simLogic", "dist", "src_func", "workflow")
+    UI_ASSETS = os.path.join(EXT, "WWTEx_ui", "assets")
+
+
+set_locations(DEFAULT_APP_DIR, DEFAULT_DATA_DIR)
+
+
+def registry_dir(name):
+    """Folder SimAppPro2's installer recorded (InstallDir, DataDir), or None."""
+    import winreg
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\SimAppPro2") as key:
+            return winreg.QueryValueEx(key, name)[0] or None
+    except OSError:
+        return None
+
+
+def saved_dirs():
+    try:
+        return load_json(PATHS_FILE)
+    except (OSError, ValueError):
+        return {}
+
+
+def valid_app_dir(path):
+    return os.path.isfile(os.path.join(path, EXE_NAME))
+
+
+def mcdu_profiles(data_dir):
+    return sorted(glob.glob(os.path.join(glob.escape(data_dir), "profile", "WWTEX_profile", "*",
+                                         "GameExtendDisplay", "MCDU")))
+
+
+def ask_dir(ui, question, valid):
+    while True:
+        path = ui.console.input(f"  {question}\n  [dim](Enter to quit)[/] > ").strip().strip("\"'")
+        if not path:
+            raise SetupError("No folder given.")
+        if path.lower().endswith(".exe"):
+            path = os.path.dirname(path)
+        if valid(path):
+            return os.path.abspath(path)
+        ui.console.print("  [red]Not the right folder.[/]")
+
+
+def locate(ui):
+    """Find SimAppPro2's app and data folders: installer's registry values, defaults, saved answers, then ask."""
+    saved = saved_dirs()
+    apps = [p for p in (registry_dir("InstallDir"), DEFAULT_APP_DIR, saved.get("app")) if p]
+    datas = [p for p in (registry_dir("DataDir"), DEFAULT_DATA_DIR, saved.get("data")) if p]
+    app = next(filter(valid_app_dir, apps), None)
+    # a folder without a profile yet (SimAppPro2 never opened with the MCDU): gamedisplay_dir says so
+    data = next(filter(mcdu_profiles, datas), None) or next(filter(os.path.isdir, datas), None)
+    ask = sys.stdin.isatty()
+    answers = {}
+    if app is None:
+        v1 = (" The original SimAppPro (version 1) is running: it is not supported."
+              if app_pids("SimAppPro.exe") else "")
+        if not ask:
+            raise SetupError(f"SimAppPro2 not found ({apps[-1]}).{v1}\n"
+                             "This setup needs SimAppPro2, not the original SimAppPro: install SimAppPro2 "
+                             "from WinWing's website, open it once with the MCDU plugged in, then run this again.")
+        ui.console.print(f"\n[yellow]SimAppPro2 was not found in its usual place.[/]{v1}")
+        app = answers["app"] = ask_dir(ui, f"Folder that holds {EXE_NAME}:", valid_app_dir)
+    if data is None and ask:
+        ui.console.print("\n[yellow]SimAppPro2's data folder was not found.[/] Open SimAppPro2 once with the MCDU "
+                         "plugged in if you never did.")
+        data = answers["data"] = ask_dir(ui, "Data folder (the one that holds profile\\WWTEX_profile):", mcdu_profiles)
+    set_locations(app, data or DEFAULT_DATA_DIR)
+    if answers:
+        try:
+            save_json(PATHS_FILE, {**saved, **answers})
+        except OSError:
+            pass
+
+
 def gamedisplay_dir():
-    hits = sorted(glob.glob(os.path.join(ROOT, "profile", "WWTEX_profile", "*", "GameExtendDisplay", "MCDU")))
+    hits = mcdu_profiles(ROOT)
     if not hits:
         raise SetupError("SimAppPro2 MCDU profile not found: start SimAppPro2 once with the MCDU plugged in.")
     return os.path.dirname(hits[0])
@@ -281,7 +361,7 @@ def wait_for_mcdu(ui):
 # ------------------------------------------------------------------ SimAppPro2
 def app_pids(exe_name=None):
     """Process ids of the running processes named exe_name (default SimAppPro2.exe)."""
-    exe_name = (exe_name or os.path.basename(EXE)).lower()
+    exe_name = (exe_name or EXE_NAME).lower()
     import ctypes
     from ctypes import wintypes
 
@@ -695,7 +775,8 @@ def cmd_check(ui, gx, y):
     mcdu = connected_mcdu()
     y, rows, ok, _ = status(gx, y)
     ui.header("WinWing MCDU · Fenix A320 · status",
-              [("SimAppPro2", "found"), ("MCDU", f"connected ({mcdu})" if mcdu else "[yellow]not connected[/]"),
+              [("SimAppPro2", os.path.dirname(EXE)), ("Data", ROOT),
+               ("MCDU", f"connected ({mcdu})" if mcdu else "[yellow]not connected[/]"),
                ("Expected", f"fonts {font_name(large)[:-6]}, height offset {fmt_offset(y)} (Y {y})")])
     ui.report(rows)
     fix = "run Full install" if FROZEN or sys.stdin.isatty() else "run installer.bat"
@@ -1025,12 +1106,7 @@ def main():
         return 2
     ui = UI()
     try:
-        if not os.path.exists(EXE):
-            v1 = (" The original SimAppPro (version 1) is running: it is not supported."
-                  if app_pids("SimAppPro.exe") else "")
-            raise SetupError(f"SimAppPro2 not found ({EXE}).{v1}\n"
-                             "This setup needs SimAppPro2, not the original SimAppPro: install SimAppPro2 "
-                             "from WinWing's website, open it once with the MCDU plugged in, then run this again.")
+        locate(ui)
         gx = gamedisplay_dir()
         if a.check:
             return 0 if cmd_check(ui, gx, a.y) else 1

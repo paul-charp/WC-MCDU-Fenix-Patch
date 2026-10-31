@@ -52,8 +52,9 @@ You need:
 - Windows, with MSFS and the Fenix A320
 - the WinWing MCDU, plugged in by USB
 - **SimAppPro2, not the original SimAppPro (version 1)**: installed, and opened at least once with
-  the MCDU plugged in. SimAppPro2 installs to `%LOCALAPPDATA%\SimAppPro2`. If you only have
-  SimAppPro, install SimAppPro2 from WinWing's website first.
+  the MCDU plugged in. A custom install folder is detected automatically; if it can't be found,
+  the patch asks for it. If you only have SimAppPro, install SimAppPro2 from WinWing's website
+  first.
 
 Nothing else: no Python or other software to install.
 

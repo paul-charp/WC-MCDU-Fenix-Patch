@@ -4,6 +4,7 @@
 # created by the scripts when they run
 backups/
 backup/
+simapppro2_paths.json
 __pycache__/
 
 # SimAppPro2 logs if it gets started from this folder

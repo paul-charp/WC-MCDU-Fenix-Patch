@@ -56,6 +56,9 @@ SimAppPro2 only (never SimAppPro v1, never Fenix or MSFS files). Windows only. U
   save in the editor: without it all font calls return status 1. `CDU_resetFont` creates it.
 - For a few seconds after start the back end answers "The peer 17 is not online": wait for
   `CDU_getPcFontArray` to succeed (`App.wait_ready`).
+- Its folders can be custom: `HKCU\Software\SimAppPro2` holds `InstallDir` and `DataDir`.
+  `locate()` tries those, then the defaults, then `simapppro2_paths.json` (next to `backups\`,
+  answers to its prompt).
 - SimAppPro2 reads its font list (`GameExtendDisplay/Windows/Fonts`) at startup only.
 - Start SimAppPro2 with stdio on DEVNULL, cwd = its install folder, and (frozen) after
   `SetDllDirectoryW(None)`, or it floods the console, drops logs in the cwd, or loads the
