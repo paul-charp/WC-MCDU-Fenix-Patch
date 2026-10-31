@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.2 (2026-10-31)
+
+- Custom SimAppPro2 folders detected from the registry
+- Asks for the folders if they are not found; answers saved in simapppro2_paths.json
+
 ## v1.2.1 (2026-10-30)
 
 - Full install no longer stops with "SimAppPro2 refused to select, convert, save or send the fonts" when SimAppPro2 has no MCDU font set yet: the set is created
